@@ -11,7 +11,7 @@ export default function ExpensesSection({ onAddExpense }: ExpensesSectionProps) 
         <h3 className="text-xl font-semibold text-gray-900">Expenses</h3>
         <button
           onClick={onAddExpense}
-          className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md"
+          className="px-4 py-2 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md"
         >
           Add Expense
         </button>

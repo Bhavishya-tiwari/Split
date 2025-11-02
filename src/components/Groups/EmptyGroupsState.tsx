@@ -15,7 +15,7 @@ export default function EmptyGroupsState({ onCreateClick }: EmptyGroupsStateProp
       <p className="text-gray-600 mb-4">No groups yet</p>
       <button
         onClick={onCreateClick}
-        className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md"
+        className="px-6 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md"
       >
         Create your first group
       </button>

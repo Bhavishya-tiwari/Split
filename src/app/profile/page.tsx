@@ -141,7 +141,7 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-12 text-white">
+        <div className="bg-linear-to-r from-emerald-500 to-teal-600 px-8 py-12 text-white">
           <div className="flex items-center gap-6">
             <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl font-bold">
               {profile?.full_name
