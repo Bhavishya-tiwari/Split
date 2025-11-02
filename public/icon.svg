@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#10b981"/>
+  
+  <!-- Split receipt icon design -->
+  <!-- Left receipt half -->
+  <path d="M140 120 L220 120 L220 392 L140 392 L140 120 Z" fill="white" opacity="0.95"/>
+  <rect x="160" y="160" width="40" height="8" rx="4" fill="#10b981" opacity="0.5"/>
+  <rect x="160" y="200" width="40" height="8" rx="4" fill="#10b981" opacity="0.5"/>
+  <rect x="160" y="240" width="30" height="8" rx="4" fill="#10b981" opacity="0.5"/>
+  
+  <!-- Right receipt half -->
+  <path d="M292 120 L372 120 L372 392 L292 392 L292 120 Z" fill="white" opacity="0.95"/>
+  <rect x="312" y="160" width="40" height="8" rx="4" fill="#10b981" opacity="0.5"/>
+  <rect x="312" y="200" width="40" height="8" rx="4" fill="#10b981" opacity="0.5"/>
+  <rect x="312" y="240" width="30" height="8" rx="4" fill="#10b981" opacity="0.5"/>
+  
+  <!-- Split line with dashes -->
+  <line x1="256" y1="100" x2="256" y2="412" stroke="white" stroke-width="12" stroke-linecap="round" stroke-dasharray="20 20"/>
+  
+  <!-- Split arrows -->
+  <path d="M220 256 L240 256 L230 246 Z" fill="white"/>
+  <path d="M220 256 L240 256 L230 266 Z" fill="white"/>
+  <path d="M292 256 L272 256 L282 246 Z" fill="white"/>
+  <path d="M292 256 L272 256 L282 266 Z" fill="white"/>
+</svg>
+

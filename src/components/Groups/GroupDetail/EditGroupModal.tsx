@@ -1,0 +1,115 @@
+import { X, Edit2 } from 'lucide-react';
+
+interface EditGroupModalProps {
+  isOpen: boolean;
+  isUpdating: boolean;
+  formData: {
+    name: string;
+    description: string;
+  };
+  error: string;
+  onClose: () => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onFormChange: (field: 'name' | 'description', value: string) => void;
+}
+
+export default function EditGroupModal({
+  isOpen,
+  isUpdating,
+  formData,
+  error,
+  onClose,
+  onSubmit,
+  onFormChange
+}: EditGroupModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <Edit2 className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-white">Edit Group</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all duration-200"
+              disabled={isUpdating}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Body */}
+        <form onSubmit={onSubmit} className="p-6">
+          <div className="mb-4">
+            <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-2">
+              Group Name *
+            </label>
+            <input
+              type="text"
+              id="edit-name"
+              value={formData.name}
+              onChange={(e) => onFormChange('name', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+              placeholder="e.g., Weekend Trip"
+              disabled={isUpdating}
+            />
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              id="edit-description"
+              value={formData.description}
+              onChange={(e) => onFormChange('description', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+              placeholder="What&apos;s this group for?"
+              rows={3}
+              disabled={isUpdating}
+            />
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+              disabled={isUpdating}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isUpdating}
+            >
+              {isUpdating ? 'Updating...' : 'Update Group'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
