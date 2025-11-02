@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { X, Edit2 } from 'lucide-react';
 
 interface EditGroupModalProps {
@@ -9,8 +13,12 @@ interface EditGroupModalProps {
   };
   error: string;
   onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onFormChange: (field: 'name' | 'description', value: string) => void;
+  onSubmit: (data: { name: string; description: string }) => Promise<void>;
+}
+
+interface FormData {
+  name: string;
+  description: string;
 }
 
 export default function EditGroupModal({
@@ -19,9 +27,21 @@ export default function EditGroupModal({
   formData,
   error,
   onClose,
-  onSubmit,
-  onFormChange
+  onSubmit
 }: EditGroupModalProps) {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+    defaultValues: formData
+  });
+
+  // Update form values when formData changes
+  useEffect(() => {
+    reset(formData);
+  }, [formData, reset]);
+
+  const handleFormSubmit = async (data: FormData) => {
+    await onSubmit(data);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -53,7 +73,7 @@ export default function EditGroupModal({
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={onSubmit} className="p-6">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6">
           <div className="mb-4">
             <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-2">
               Group Name *
@@ -61,12 +81,17 @@ export default function EditGroupModal({
             <input
               type="text"
               id="edit-name"
-              value={formData.name}
-              onChange={(e) => onFormChange('name', e.target.value)}
+              {...register('name', { 
+                required: 'Group name is required',
+                validate: value => value.trim().length > 0 || 'Group name is required'
+              })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               placeholder="e.g., Weekend Trip"
               disabled={isUpdating}
             />
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="mb-6">
@@ -75,8 +100,7 @@ export default function EditGroupModal({
             </label>
             <textarea
               id="edit-description"
-              value={formData.description}
-              onChange={(e) => onFormChange('description', e.target.value)}
+              {...register('description')}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               placeholder="What&apos;s this group for?"
               rows={3}

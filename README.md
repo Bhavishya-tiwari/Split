@@ -10,7 +10,7 @@ A mobile-first web application for splitting bills and managing shared expenses 
 - 📊 Track shared expenses
 - ✅ Easy settlement
 
-## Getting Started
+## Getting Startedgit clone git@github-chargebee:cb-bhavishya-tiwari/repo.git
 
 First, install dependencies:
 

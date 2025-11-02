@@ -98,32 +98,26 @@ export default function GroupDetailPage() {
     }
   };
 
-  const handleUpdateGroup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateGroup = async (data: { name: string; description: string }) => {
     setEditError('');
-
-    if (!editFormData.name.trim()) {
-      setEditError('Group name is required');
-      return;
-    }
-
     setIsUpdating(true);
 
     try {
-      const { data } = await axios.put('/api/groups', {
+      const response = await axios.put('/api/groups', {
         id: groupId,
-        name: editFormData.name,
-        description: editFormData.description
+        name: data.name,
+        description: data.description
       });
 
       // Update local state with new group data
-      setGroup(data.group);
+      setGroup(response.data.group);
       setShowEditModal(false);
       setEditError('');
     } catch (err: unknown) {
       console.error('Error updating group:', err);
       const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
       setEditError(errorMessage || 'Failed to update group');
+      throw err; // Re-throw to let form handle the error
     } finally {
       setIsUpdating(false);
     }
@@ -184,10 +178,6 @@ export default function GroupDetailPage() {
     );
   }
 
-  const handleFormChange = (field: 'name' | 'description', value: string) => {
-    setEditFormData({ ...editFormData, [field]: value });
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <GroupHeader
@@ -228,7 +218,6 @@ export default function GroupDetailPage() {
         error={editError}
         onClose={() => setShowEditModal(false)}
         onSubmit={handleUpdateGroup}
-        onFormChange={handleFormChange}
       />
     </div>
   );
