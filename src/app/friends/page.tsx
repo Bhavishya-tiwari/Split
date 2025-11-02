@@ -53,7 +53,7 @@ export default function FriendsPage() {
             <Users className="w-8 h-8 text-gray-400" />
           </div>
           <p className="text-gray-600 mb-4">No friends yet</p>
-          <button className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md">
+          <button className="px-6 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md">
             Add your first friend
           </button>
         </div>

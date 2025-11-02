@@ -27,7 +27,7 @@ export default function SettingsModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-5 relative">
+        <div className="bg-linear-to-r from-emerald-500 to-teal-600 px-6 py-5 relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
