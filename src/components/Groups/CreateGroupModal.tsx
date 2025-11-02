@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import axios from 'axios';
 
@@ -10,27 +11,31 @@ interface CreateGroupModalProps {
   onSuccess: () => void;
 }
 
+interface FormData {
+  name: string;
+  description: string;
+}
+
 export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateGroupModalProps) {
   const [creating, setCreating] = useState(false);
-  const [formData, setFormData] = useState({ name: '', description: '' });
   const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!formData.name.trim()) {
-      setError('Group name is required');
-      return;
+  
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+    defaultValues: {
+      name: '',
+      description: ''
     }
+  });
 
+  const onSubmit = async (data: FormData) => {
+    setError('');
     setCreating(true);
 
     try {
-      await axios.post('/api/groups', formData);
+      await axios.post('/api/groups', data);
 
       // Success - reset form and close modal
-      setFormData({ name: '', description: '' });
+      reset();
       setError('');
       onClose();
       onSuccess();
@@ -45,7 +50,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
 
   const handleClose = () => {
     setError('');
-    setFormData({ name: '', description: '' });
+    reset();
     onClose();
   };
 
@@ -64,7 +69,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-4">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
               Group Name *
@@ -72,12 +77,17 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
             <input
               type="text"
               id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              {...register('name', { 
+                required: 'Group name is required',
+                validate: value => value.trim().length > 0 || 'Group name is required'
+              })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder="e.g., Weekend Trip"
               disabled={creating}
             />
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="mb-6">
@@ -86,8 +96,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
             </label>
             <textarea
               id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              {...register('description')}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder="What's this group for?"
               rows={3}

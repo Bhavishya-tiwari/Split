@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { GroupMember } from './types';
 import MemberListItem from './MemberListItem';
 import { X, Plus } from 'lucide-react';
@@ -14,6 +15,10 @@ interface MembersModalProps {
   currentUserId: string | null;
 }
 
+interface AddMemberFormData {
+  email: string;
+}
+
 export default function MembersModal({ 
   isOpen, 
   onClose, 
@@ -24,43 +29,34 @@ export default function MembersModal({
   currentUserId,
 }: MembersModalProps) {
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-  const [newMemberEmail, setNewMemberEmail] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState('');
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
 
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<AddMemberFormData>({
+    defaultValues: {
+      email: ''
+    }
+  });
+
   if (!isOpen) return null;
 
-  const handleMemberAddition = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleMemberAddition = async (data: AddMemberFormData) => {
     setAddError('');
-
-    if (!newMemberEmail.trim()) {
-      setAddError('Email is required');
-      return;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newMemberEmail)) {
-      setAddError('Please enter a valid email address');
-      return;
-    }
-
     setIsAdding(true);
 
     try {
-      const { data } = await axios.post('/api/groups/members', {
+      const { data: responseData } = await axios.post('/api/groups/members', {
         group_id: groupId,
-        email: newMemberEmail.trim().toLowerCase(),
+        email: data.email.trim().toLowerCase(),
       });
 
       // Add the new member to the list
-      setMembers([...members, data.member]);
+      setMembers([...members, responseData.member]);
       
       // Close the add member modal and reset form
       setShowAddMemberModal(false);
-      setNewMemberEmail('');
+      reset();
       setAddError('');
     } catch (err: unknown) {
       console.error('Error adding member:', err);
@@ -163,7 +159,7 @@ export default function MembersModal({
               className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
               onClick={() => {
                 setShowAddMemberModal(false);
-                setNewMemberEmail('');
+                reset();
                 setAddError('');
               }}
             />
@@ -176,7 +172,7 @@ export default function MembersModal({
                 <button
                   onClick={() => {
                     setShowAddMemberModal(false);
-                    setNewMemberEmail('');
+                    reset();
                     setAddError('');
                   }}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -187,7 +183,7 @@ export default function MembersModal({
               </div>
 
               {/* Form */}
-              <form onSubmit={handleMemberAddition} className="p-6">
+              <form onSubmit={handleSubmit(handleMemberAddition)} className="p-6">
                 <div className="mb-4">
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address
@@ -195,12 +191,20 @@ export default function MembersModal({
                   <input
                     type="email"
                     id="email"
-                    value={newMemberEmail}
-                    onChange={(e) => setNewMemberEmail(e.target.value)}
+                    {...register('email', {
+                      required: 'Email is required',
+                      pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: 'Please enter a valid email address'
+                      }
+                    })}
                     placeholder="user@example.com"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     disabled={isAdding}
                   />
+                  {errors.email && (
+                    <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
+                  )}
                   <p className="text-sm text-gray-500 mt-2">
                     Enter the email address of the user you want to add to this group.
                   </p>
@@ -217,7 +221,7 @@ export default function MembersModal({
                     type="button"
                     onClick={() => {
                       setShowAddMemberModal(false);
-                      setNewMemberEmail('');
+                      reset();
                       setAddError('');
                     }}
                     className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all"

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { createClientForBrowser } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -12,15 +13,25 @@ interface UserProfile {
   created_at: string;
 }
 
+interface ProfileFormData {
+  full_name: string;
+  phone: string;
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProfileFormData>({
+    defaultValues: {
+      full_name: '',
+      phone: ''
+    }
+  });
 
   useEffect(() => {
     loadUserProfile();
@@ -45,19 +56,24 @@ export default function ProfilePage() {
 
       if (profileData) {
         setProfile(profileData);
-        setFullName(profileData.full_name || '');
-        setPhone(profileData.phone || '');
+        reset({
+          full_name: profileData.full_name || '',
+          phone: profileData.phone || ''
+        });
       } else {
         // If no profile exists, create a basic one from user metadata
-        setProfile({
+        const newProfile = {
           id: currentUser.id,
           email: currentUser.email || '',
           full_name: currentUser.user_metadata?.full_name || null,
           phone: currentUser.user_metadata?.phone || null,
           created_at: currentUser.created_at,
+        };
+        setProfile(newProfile);
+        reset({
+          full_name: newProfile.full_name || '',
+          phone: newProfile.phone || ''
         });
-        setFullName(currentUser.user_metadata?.full_name || '');
-        setPhone(currentUser.user_metadata?.phone || '');
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -67,7 +83,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSave = async () => {
+  const onSubmit = async (data: ProfileFormData) => {
     if (!user) return;
 
     setSaving(true);
@@ -81,15 +97,15 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          full_name: fullName || null,
-          phone: phone || null,
+          full_name: data.full_name || null,
+          phone: data.phone || null,
         }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save profile');
+        throw new Error(responseData.error || 'Failed to save profile');
       }
 
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
@@ -106,8 +122,10 @@ export default function ProfilePage() {
 
   const handleCancel = () => {
     setEditing(false);
-    setFullName(profile?.full_name || '');
-    setPhone(profile?.phone || '');
+    reset({
+      full_name: profile?.full_name || '',
+      phone: profile?.phone || ''
+    });
     setMessage(null);
   };
 
@@ -153,102 +171,149 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <div className="space-y-6">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
-              {editing ? (
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="Enter your full name"
-                />
-              ) : (
-                <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
-                  {profile?.full_name || 'Not set'}
-                </p>
-              )}
-            </div>
+          {editing ? (
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="space-y-6">
+                {/* Full Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    {...register('full_name')}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder="Enter your full name"
+                  />
+                  {errors.full_name && (
+                    <p className="text-red-600 text-sm mt-1">{errors.full_name.message}</p>
+                  )}
+                </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
-              </label>
-              {editing ? (
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="Enter your phone number"
-                />
-              ) : (
-                <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
-                  {profile?.phone || 'Not set'}
-                </p>
-              )}
-            </div>
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    {...register('phone')}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder="Enter your phone number"
+                  />
+                  {errors.phone && (
+                    <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
+                  )}
+                </div>
 
-            {/* Email (Read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
-                {profile?.email}
-              </p>
-            </div>
+                {/* Email (Read-only) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
+                    {profile?.email}
+                  </p>
+                </div>
 
-            {/* Member Since */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Member Since
-              </label>
-              <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
-                {profile?.created_at
-                  ? new Date(profile.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })
-                  : 'N/A'}
-              </p>
-            </div>
-          </div>
+                {/* Member Since */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Member Since
+                  </label>
+                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
+                    {profile?.created_at
+                      ? new Date(profile.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
 
-          {/* Action Buttons */}
-          <div className="mt-8 flex gap-4">
-            {editing ? (
-              <>
+              {/* Action Buttons */}
+              <div className="mt-8 flex gap-4">
                 <button
-                  onClick={handleSave}
+                  type="submit"
                   disabled={saving}
                   className="flex-1 bg-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
+                  type="button"
                   onClick={handleCancel}
                   disabled={saving}
                   className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setEditing(true)}
-                className="w-full bg-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-700 transition-colors"
-              >
-                Edit Profile
-              </button>
-            )}
-          </div>
+              </div>
+            </form>
+          ) : (
+            <div>
+              <div className="space-y-6">
+                {/* Full Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name
+                  </label>
+                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
+                    {profile?.full_name || 'Not set'}
+                  </p>
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
+                    {profile?.phone || 'Not set'}
+                  </p>
+                </div>
+
+                {/* Email (Read-only) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
+                    {profile?.email}
+                  </p>
+                </div>
+
+                {/* Member Since */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Member Since
+                  </label>
+                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
+                    {profile?.created_at
+                      ? new Date(profile.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-8">
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className="w-full bg-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+                >
+                  Edit Profile
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
