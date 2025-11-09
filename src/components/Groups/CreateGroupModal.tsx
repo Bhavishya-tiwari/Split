@@ -21,16 +21,21 @@ interface FormData {
 export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateGroupModalProps) {
   const [error, setError] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('Users');
-  
+
   // REACT QUERY: Automatic cache invalidation
   const createGroupMutation = useCreateGroup();
-  
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
     defaultValues: {
       name: '',
       description: '',
-      icon: 'Users'
-    }
+      icon: 'Users',
+    },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -39,7 +44,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
     try {
       await createGroupMutation.mutateAsync({
         ...data,
-        icon: selectedIcon
+        icon: selectedIcon,
       });
 
       // Success - reset form and close modal
@@ -85,17 +90,15 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
             <input
               type="text"
               id="name"
-              {...register('name', { 
+              {...register('name', {
                 required: 'Group name is required',
-                validate: value => value.trim().length > 0 || 'Group name is required'
+                validate: (value) => value.trim().length > 0 || 'Group name is required',
               })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder="e.g., Weekend Trip"
               disabled={createGroupMutation.isPending}
             />
-            {errors.name && (
-              <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>}
           </div>
 
           <div className="mb-4">
@@ -113,10 +116,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
           </div>
 
           <div className="mb-6">
-            <IconPicker
-              selectedIcon={selectedIcon}
-              onIconSelect={setSelectedIcon}
-            />
+            <IconPicker selectedIcon={selectedIcon} onIconSelect={setSelectedIcon} />
           </div>
 
           {error && (
@@ -147,4 +147,3 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
     </div>
   );
 }
-

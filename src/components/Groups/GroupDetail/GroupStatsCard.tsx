@@ -7,7 +7,7 @@ interface GroupStatsCardProps {
 export default function GroupStatsCard({
   totalExpenses = 0,
   totalAmount = '$0.00',
-  yourShare = '$0.00'
+  yourShare = '$0.00',
 }: GroupStatsCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
@@ -29,4 +29,3 @@ export default function GroupStatsCard({
     </div>
   );
 }
-

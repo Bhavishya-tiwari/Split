@@ -12,12 +12,17 @@ interface MembersCardProps {
   currentUserId: string | null;
 }
 
-export default function MembersCard({ members, isAdmin, groupId, currentUserId }: MembersCardProps) {
+export default function MembersCard({
+  members,
+  isAdmin,
+  groupId,
+  currentUserId,
+}: MembersCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <>
-      <div 
+      <div
         className="bg-white rounded-xl shadow-md border border-gray-200 p-4 cursor-pointer hover:shadow-lg transition-shadow"
         onClick={() => setIsModalOpen(true)}
       >
@@ -28,7 +33,6 @@ export default function MembersCard({ members, isAdmin, groupId, currentUserId }
             <ChevronRight className="h-3 w-5 text-gray-400" />
           </div>
         </div>
-        
       </div>
 
       <MembersModal

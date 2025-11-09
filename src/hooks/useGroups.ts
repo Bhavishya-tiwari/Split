@@ -1,6 +1,6 @@
 /**
  * React Query hooks for Groups
- * 
+ *
  * Provides:
  * - Automatic caching
  * - Loading/error states
@@ -96,12 +96,12 @@ export function useCreateGroup() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create group');
       }
-      
+
       const result = await response.json();
       return result.group as Group;
     },
@@ -125,12 +125,12 @@ export function useUpdateGroup() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to update group');
       }
-      
+
       const result = await response.json();
       return result.group as Group;
     },
@@ -154,7 +154,7 @@ export function useDeleteGroup() {
       const response = await fetch(`/api/groups?id=${groupId}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete group');
@@ -166,4 +166,3 @@ export function useDeleteGroup() {
     },
   });
 }
-

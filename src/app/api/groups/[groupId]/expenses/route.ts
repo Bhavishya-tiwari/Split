@@ -50,17 +50,17 @@ async function validateAllUsersInGroup(
     console.error('Error checking memberships:', error);
     return {
       valid: false,
-      invalidUsers: userIds
+      invalidUsers: userIds,
     };
   }
 
   // Find which users are NOT in the results
-  const validUserIds = new Set(memberships?.map(m => m.user_id) || []);
-  const invalidUsers = userIds.filter(id => !validUserIds.has(id));
+  const validUserIds = new Set(memberships?.map((m) => m.user_id) || []);
+  const invalidUsers = userIds.filter((id) => !validUserIds.has(id));
 
   return {
     valid: invalidUsers.length === 0,
-    invalidUsers
+    invalidUsers,
   };
 }
 
@@ -118,7 +118,10 @@ function validateExpenseData(data: {
       } else if (typeof split.amount !== 'number' || split.amount < 0) {
         errors.push(`Split ${index + 1}: amount must be a non-negative number`);
       }
-      if (split.split_type && !['equal', 'exact', 'percentage', 'shares'].includes(split.split_type)) {
+      if (
+        split.split_type &&
+        !['equal', 'exact', 'percentage', 'shares'].includes(split.split_type)
+      ) {
         errors.push(`Split ${index + 1}: invalid split_type '${split.split_type}'`);
       }
     });
@@ -127,23 +130,27 @@ function validateExpenseData(data: {
     if (data.amount && data.splits.length > 0) {
       const totalSplitAmount = data.splits.reduce((sum, split) => sum + (split.amount || 0), 0);
       if (Math.abs(totalSplitAmount - data.amount) > 0.01) {
-        errors.push(`Total split amounts (${totalSplitAmount.toFixed(2)}) must equal expense amount (${data.amount.toFixed(2)})`);
+        errors.push(
+          `Total split amounts (${totalSplitAmount.toFixed(2)}) must equal expense amount (${data.amount.toFixed(2)})`
+        );
       }
     }
 
     // Validate that expense is not split ONLY to the payer
     // (i.e., if there's only one person in splits and it's the payer, that's invalid)
     if (data.paid_by && data.splits.length > 0) {
-      const uniqueSplitUserIds = [...new Set(data.splits.map(s => s.user_id))];
+      const uniqueSplitUserIds = [...new Set(data.splits.map((s) => s.user_id))];
       if (uniqueSplitUserIds.length === 1 && uniqueSplitUserIds[0] === data.paid_by) {
-        errors.push('Cannot create an expense that is only split to the payer. Please include at least one other person.');
+        errors.push(
+          'Cannot create an expense that is only split to the payer. Please include at least one other person.'
+        );
       }
     }
   }
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   };
 }
 
@@ -157,23 +164,20 @@ export async function GET(
   try {
     // Authenticate the user
     const supabase = await createClientForServer();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get group ID from params
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json(
-        { error: 'Group ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
     }
 
     // Get pagination params
@@ -188,16 +192,18 @@ export async function GET(
     // Verify user is a member of the group
     const membership = await validateGroupMembership(serviceSupabase, user.id, groupId);
     if (!membership) {
-      return NextResponse.json(
-        { error: 'You are not a member of this group' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'You are not a member of this group' }, { status: 403 });
     }
 
     // OPTIMIZED: Fetch expenses WITHOUT profile joins (70% memory reduction)
-    const { data: expenses, error: expensesError, count } = await serviceSupabase
+    const {
+      data: expenses,
+      error: expensesError,
+      count,
+    } = await serviceSupabase
       .from('expenses')
-      .select(`
+      .select(
+        `
         id,
         title,
         group_id,
@@ -218,25 +224,24 @@ export async function GET(
           percentage,
           shares
         )
-      `, { count: 'exact' })
+      `,
+        { count: 'exact' }
+      )
       .eq('group_id', groupId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (expensesError) {
       console.error('Error fetching expenses:', expensesError);
-      return NextResponse.json(
-        { error: 'Failed to fetch expenses' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 });
     }
 
     // OPTIMIZED: Collect unique user IDs and fetch profiles ONCE
     const userIds = new Set<string>();
-    expenses?.forEach(expense => {
+    expenses?.forEach((expense) => {
       userIds.add(expense.created_by);
-      expense.expense_payers?.forEach(payer => userIds.add(payer.paid_by));
-      expense.expense_splits?.forEach(split => userIds.add(split.user_id));
+      expense.expense_payers?.forEach((payer) => userIds.add(payer.paid_by));
+      expense.expense_splits?.forEach((split) => userIds.add(split.user_id));
     });
 
     // Fetch all unique profiles in a single query
@@ -251,38 +256,37 @@ export async function GET(
     }
 
     // Create a profile lookup map for O(1) access
-    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
 
     // Map profiles to expenses on the backend
-    const enrichedExpenses = expenses?.map(expense => ({
+    const enrichedExpenses = expenses?.map((expense) => ({
       ...expense,
       created_by_profile: profileMap.get(expense.created_by) || null,
-      expense_payers: expense.expense_payers?.map(payer => ({
-        ...payer,
-        payer_profile: profileMap.get(payer.paid_by) || null
-      })) || [],
-      expense_splits: expense.expense_splits?.map(split => ({
-        ...split,
-        split_user_profile: profileMap.get(split.user_id) || null
-      })) || []
+      expense_payers:
+        expense.expense_payers?.map((payer) => ({
+          ...payer,
+          payer_profile: profileMap.get(payer.paid_by) || null,
+        })) || [],
+      expense_splits:
+        expense.expense_splits?.map((split) => ({
+          ...split,
+          split_user_profile: profileMap.get(split.user_id) || null,
+        })) || [],
     }));
 
     return NextResponse.json(
-      { 
+      {
         expenses: enrichedExpenses || [],
         count: count || 0,
         page,
         limit,
-        totalPages: count ? Math.ceil(count / limit) : 0
+        totalPages: count ? Math.ceil(count / limit) : 0,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error('Error in GET /api/groups/[groupId]/expenses:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -296,23 +300,20 @@ export async function POST(
   try {
     // Authenticate the user
     const supabase = await createClientForServer();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get group ID from params
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json(
-        { error: 'Group ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
     }
 
     // Parse request body
@@ -326,16 +327,16 @@ export async function POST(
       paid_by,
       amount: typeof amount === 'string' ? parseFloat(amount) : amount,
       currency: currency || 'INR',
-      splits: splits || []
+      splits: splits || [],
     };
 
     // Validate expense data
     const validation = validateExpenseData(expenseData);
     if (!validation.valid) {
       return NextResponse.json(
-        { 
+        {
           error: 'Validation failed',
-          details: validation.errors
+          details: validation.errors,
         },
         { status: 400 }
       );
@@ -347,10 +348,7 @@ export async function POST(
     // Verify user is a member of the group
     const membership = await validateGroupMembership(serviceSupabase, user.id, groupId);
     if (!membership) {
-      return NextResponse.json(
-        { error: 'You are not a member of this group' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'You are not a member of this group' }, { status: 403 });
     }
 
     // Collect all user IDs (payer + split users)
@@ -363,7 +361,7 @@ export async function POST(
       return NextResponse.json(
         {
           error: 'Some users are not members of this group',
-          invalidUsers: userValidation.invalidUsers
+          invalidUsers: userValidation.invalidUsers,
         },
         { status: 400 }
       );
@@ -377,21 +375,23 @@ export async function POST(
       currency: expenseData.currency,
       paid_by: expenseData.paid_by,
       amount: expenseData.amount,
-      splits: expenseData.splits
+      splits: expenseData.splits,
     };
 
     // Call the database function to create the expense
-    const { data: expenseId, error: createError } = await serviceSupabase
-      .rpc('upsert_expense_from_json', {
-        expense_json: functionPayload
-      });
+    const { data: expenseId, error: createError } = await serviceSupabase.rpc(
+      'upsert_expense_from_json',
+      {
+        expense_json: functionPayload,
+      }
+    );
 
     if (createError) {
       console.error('Error creating expense:', createError);
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to create expense',
-          details: createError.message
+          details: createError.message,
         },
         { status: 500 }
       );
@@ -400,7 +400,8 @@ export async function POST(
     // OPTIMIZED: Fetch the created expense WITHOUT profile joins
     const { data: createdExpense, error: fetchError } = await serviceSupabase
       .from('expenses')
-      .select(`
+      .select(
+        `
         id,
         title,
         group_id,
@@ -410,7 +411,8 @@ export async function POST(
         updated_at,
         expense_payers(id, amount, paid_by),
         expense_splits(id, user_id, amount, split_type, percentage, shares)
-      `)
+      `
+      )
       .eq('id', expenseId)
       .single();
 
@@ -418,9 +420,9 @@ export async function POST(
       console.error('Error fetching created expense:', fetchError);
       // Still return success since expense was created
       return NextResponse.json(
-        { 
+        {
           message: 'Expense created successfully',
-          expenseId
+          expenseId,
         },
         { status: 201 }
       );
@@ -428,42 +430,41 @@ export async function POST(
 
     // OPTIMIZED: Fetch profiles separately
     const userIds = new Set<string>([createdExpense.created_by]);
-    createdExpense.expense_payers?.forEach(payer => userIds.add(payer.paid_by));
-    createdExpense.expense_splits?.forEach(split => userIds.add(split.user_id));
+    createdExpense.expense_payers?.forEach((payer) => userIds.add(payer.paid_by));
+    createdExpense.expense_splits?.forEach((split) => userIds.add(split.user_id));
 
     const { data: profiles } = await serviceSupabase
       .from('profiles')
       .select('id, full_name, email')
       .in('id', Array.from(userIds));
 
-    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
 
     const enrichedExpense = {
       ...createdExpense,
       created_by_profile: profileMap.get(createdExpense.created_by) || null,
-      expense_payers: createdExpense.expense_payers?.map(payer => ({
-        ...payer,
-        payer_profile: profileMap.get(payer.paid_by) || null
-      })) || [],
-      expense_splits: createdExpense.expense_splits?.map(split => ({
-        ...split,
-        split_user_profile: profileMap.get(split.user_id) || null
-      })) || []
+      expense_payers:
+        createdExpense.expense_payers?.map((payer) => ({
+          ...payer,
+          payer_profile: profileMap.get(payer.paid_by) || null,
+        })) || [],
+      expense_splits:
+        createdExpense.expense_splits?.map((split) => ({
+          ...split,
+          split_user_profile: profileMap.get(split.user_id) || null,
+        })) || [],
     };
 
     return NextResponse.json(
       {
         message: 'Expense created successfully',
-        expense: enrichedExpense
+        expense: enrichedExpense,
       },
       { status: 201 }
     );
   } catch (error) {
     console.error('Error in POST /api/groups/[groupId]/expenses:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -477,23 +478,20 @@ export async function PUT(
   try {
     // Authenticate the user
     const supabase = await createClientForServer();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get group ID from params
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json(
-        { error: 'Group ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
     }
 
     // Parse request body
@@ -502,10 +500,7 @@ export async function PUT(
 
     // Validate expense_id is provided
     if (!expense_id) {
-      return NextResponse.json(
-        { error: 'Expense ID is required for update' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Expense ID is required for update' }, { status: 400 });
     }
 
     // Ensure group_id matches the route parameter
@@ -515,16 +510,16 @@ export async function PUT(
       paid_by,
       amount: typeof amount === 'string' ? parseFloat(amount) : amount,
       currency: currency || 'INR',
-      splits: splits || []
+      splits: splits || [],
     };
 
     // Validate expense data
     const validation = validateExpenseData(expenseData);
     if (!validation.valid) {
       return NextResponse.json(
-        { 
+        {
           error: 'Validation failed',
-          details: validation.errors
+          details: validation.errors,
         },
         { status: 400 }
       );
@@ -536,10 +531,7 @@ export async function PUT(
     // Verify user is a member of the group
     const membership = await validateGroupMembership(serviceSupabase, user.id, groupId);
     if (!membership) {
-      return NextResponse.json(
-        { error: 'You are not a member of this group' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'You are not a member of this group' }, { status: 403 });
     }
 
     // Verify the expense exists and belongs to this group
@@ -550,17 +542,11 @@ export async function PUT(
       .single();
 
     if (expenseCheckError || !existingExpense) {
-      return NextResponse.json(
-        { error: 'Expense not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
 
     if (existingExpense.group_id !== groupId) {
-      return NextResponse.json(
-        { error: 'Expense does not belong to this group' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Expense does not belong to this group' }, { status: 400 });
     }
 
     // Collect all user IDs (payer + split users)
@@ -573,7 +559,7 @@ export async function PUT(
       return NextResponse.json(
         {
           error: 'Some users are not members of this group',
-          invalidUsers: userValidation.invalidUsers
+          invalidUsers: userValidation.invalidUsers,
         },
         { status: 400 }
       );
@@ -588,21 +574,23 @@ export async function PUT(
       currency: expenseData.currency,
       paid_by: expenseData.paid_by,
       amount: expenseData.amount,
-      splits: expenseData.splits
+      splits: expenseData.splits,
     };
 
     // Call the database function to update the expense
-    const { data: updatedExpenseId, error: updateError } = await serviceSupabase
-      .rpc('upsert_expense_from_json', {
-        expense_json: functionPayload
-      });
+    const { data: updatedExpenseId, error: updateError } = await serviceSupabase.rpc(
+      'upsert_expense_from_json',
+      {
+        expense_json: functionPayload,
+      }
+    );
 
     if (updateError) {
       console.error('Error updating expense:', updateError);
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to update expense',
-          details: updateError.message
+          details: updateError.message,
         },
         { status: 500 }
       );
@@ -611,7 +599,8 @@ export async function PUT(
     // OPTIMIZED: Fetch the updated expense WITHOUT profile joins
     const { data: updatedExpense, error: fetchError } = await serviceSupabase
       .from('expenses')
-      .select(`
+      .select(
+        `
         id,
         title,
         group_id,
@@ -621,7 +610,8 @@ export async function PUT(
         updated_at,
         expense_payers(id, amount, paid_by),
         expense_splits(id, user_id, amount, split_type, percentage, shares)
-      `)
+      `
+      )
       .eq('id', updatedExpenseId)
       .single();
 
@@ -629,9 +619,9 @@ export async function PUT(
       console.error('Error fetching updated expense:', fetchError);
       // Still return success since expense was updated
       return NextResponse.json(
-        { 
+        {
           message: 'Expense updated successfully',
-          expenseId: updatedExpenseId
+          expenseId: updatedExpenseId,
         },
         { status: 200 }
       );
@@ -639,42 +629,41 @@ export async function PUT(
 
     // OPTIMIZED: Fetch profiles separately
     const userIds = new Set<string>([updatedExpense.created_by]);
-    updatedExpense.expense_payers?.forEach(payer => userIds.add(payer.paid_by));
-    updatedExpense.expense_splits?.forEach(split => userIds.add(split.user_id));
+    updatedExpense.expense_payers?.forEach((payer) => userIds.add(payer.paid_by));
+    updatedExpense.expense_splits?.forEach((split) => userIds.add(split.user_id));
 
     const { data: profiles } = await serviceSupabase
       .from('profiles')
       .select('id, full_name, email')
       .in('id', Array.from(userIds));
 
-    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
 
     const enrichedExpense = {
       ...updatedExpense,
       created_by_profile: profileMap.get(updatedExpense.created_by) || null,
-      expense_payers: updatedExpense.expense_payers?.map(payer => ({
-        ...payer,
-        payer_profile: profileMap.get(payer.paid_by) || null
-      })) || [],
-      expense_splits: updatedExpense.expense_splits?.map(split => ({
-        ...split,
-        split_user_profile: profileMap.get(split.user_id) || null
-      })) || []
+      expense_payers:
+        updatedExpense.expense_payers?.map((payer) => ({
+          ...payer,
+          payer_profile: profileMap.get(payer.paid_by) || null,
+        })) || [],
+      expense_splits:
+        updatedExpense.expense_splits?.map((split) => ({
+          ...split,
+          split_user_profile: profileMap.get(split.user_id) || null,
+        })) || [],
     };
 
     return NextResponse.json(
       {
         message: 'Expense updated successfully',
-        expense: enrichedExpense
+        expense: enrichedExpense,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error('Error in PUT /api/groups/[groupId]/expenses:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -688,23 +677,20 @@ export async function DELETE(
   try {
     // Authenticate the user
     const supabase = await createClientForServer();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get group ID from params
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json(
-        { error: 'Group ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
     }
 
     // Get expense ID from query params
@@ -712,10 +698,7 @@ export async function DELETE(
     const expenseId = searchParams.get('expense_id');
 
     if (!expenseId) {
-      return NextResponse.json(
-        { error: 'Expense ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Expense ID is required' }, { status: 400 });
     }
 
     // Use service role client
@@ -724,10 +707,7 @@ export async function DELETE(
     // Verify user is a member of the group
     const membership = await validateGroupMembership(serviceSupabase, user.id, groupId);
     if (!membership) {
-      return NextResponse.json(
-        { error: 'You are not a member of this group' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'You are not a member of this group' }, { status: 403 });
     }
 
     // Verify the expense exists and belongs to this group
@@ -738,17 +718,11 @@ export async function DELETE(
       .single();
 
     if (expenseCheckError || !expense) {
-      return NextResponse.json(
-        { error: 'Expense not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
 
     if (expense.group_id !== groupId) {
-      return NextResponse.json(
-        { error: 'Expense does not belong to this group' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Expense does not belong to this group' }, { status: 400 });
     }
 
     // Delete the expense (cascade will delete related payers and splits)
@@ -759,22 +733,12 @@ export async function DELETE(
 
     if (deleteError) {
       console.error('Error deleting expense:', deleteError);
-      return NextResponse.json(
-        { error: 'Failed to delete expense' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to delete expense' }, { status: 500 });
     }
 
-    return NextResponse.json(
-      { message: 'Expense deleted successfully' },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: 'Expense deleted successfully' }, { status: 200 });
   } catch (error) {
     console.error('Error in DELETE /api/groups/[groupId]/expenses:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

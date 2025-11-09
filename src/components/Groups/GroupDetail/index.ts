@@ -13,4 +13,3 @@ export { default as SplitMemberSelector } from './SplitMemberSelector';
 export { default as SplitSummary } from './SplitSummary';
 export * from './types';
 export * from './constants';
-

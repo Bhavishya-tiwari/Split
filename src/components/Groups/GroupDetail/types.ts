@@ -18,4 +18,3 @@ export interface GroupMember {
     email: string;
   };
 }
-

@@ -13,16 +13,16 @@ export default function SettingsModal({
   isDeleting,
   onClose,
   onEdit,
-  onDelete
+  onDelete,
 }: SettingsModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
@@ -95,4 +95,3 @@ export default function SettingsModal({
     </div>
   );
 }
-

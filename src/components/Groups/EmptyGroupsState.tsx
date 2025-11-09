@@ -22,4 +22,3 @@ export default function EmptyGroupsState({ onCreateClick }: EmptyGroupsStateProp
     </div>
   );
 }
-

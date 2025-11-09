@@ -10,4 +10,3 @@ export default function LoadingState() {
     </div>
   );
 }
-

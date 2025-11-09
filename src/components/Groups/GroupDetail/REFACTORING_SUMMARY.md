@@ -11,14 +11,17 @@ Successfully componentized large modal files by extracting reusable components, 
 ### 📦 New Reusable Components Created
 
 #### 1. **ExpenseFormFields.tsx** (145 lines)
+
 Handles all basic expense form fields:
+
 - Title input
-- Currency selector  
+- Currency selector
 - Payer dropdown
 - Amount input
 - Total amount display
 
 **Props:**
+
 - `register` - React Hook Form register function
 - `errors` - Form validation errors
 - `members` - List of group members
@@ -29,13 +32,16 @@ Handles all basic expense form fields:
 ---
 
 #### 2. **SplitMemberSelector.tsx** (102 lines)
+
 Handles member selection and split amount entry:
+
 - Member checkboxes
 - Equal split amount display
 - Exact amount inputs
 - Validation warnings
 
 **Props:**
+
 - `members` - List of group members
 - `selectedMembers` - Set of selected member IDs
 - `onToggleMember` - Toggle member selection callback
@@ -50,12 +56,15 @@ Handles member selection and split amount entry:
 ---
 
 #### 3. **SplitSummary.tsx** (95 lines)
+
 Shows split calculation summaries:
+
 - Equal split summary (amount per person)
 - Exact split validation (amounts match total)
 - Visual validation feedback
 
 **Props:**
+
 - `splitType` - Current split type
 - `selectedMembersCount` - Number of selected members
 - `totalAmount` - Total expense amount
@@ -67,11 +76,13 @@ Shows split calculation summaries:
 ### 🔄 Refactored Main Components
 
 #### AddExpenseModal.tsx
+
 **Before:** 552 lines  
 **After:** 235 lines  
 **Reduction:** 57% smaller (317 lines removed)
 
 **Key Changes:**
+
 - Extracted form fields to `ExpenseFormFields`
 - Extracted member selection to `SplitMemberSelector`
 - Extracted summaries to `SplitSummary`
@@ -80,11 +91,13 @@ Shows split calculation summaries:
 ---
 
 #### EditExpenseModal.tsx
+
 **Before:** 608 lines  
 **After:** 277 lines  
 **Reduction:** 54% smaller (331 lines removed)
 
 **Key Changes:**
+
 - Same extraction as AddExpenseModal
 - Added view/edit mode toggle
 - Kept expense data loading logic
@@ -95,18 +108,21 @@ Shows split calculation summaries:
 ## Benefits
 
 ### ✅ Code Quality
+
 - **DRY Principle**: No more duplicate code between modals
 - **Single Responsibility**: Each component has one clear purpose
 - **Easier Testing**: Smaller components are easier to test
 - **Better Readability**: Main modals are now <300 lines each
 
 ### ✅ Maintainability
+
 - **Single Source of Truth**: Change form field logic in one place
 - **Reusability**: Components can be used in future features
 - **Easier Debugging**: Isolated components are easier to debug
 - **Clear Props Interface**: Well-defined component contracts
 
 ### ✅ Performance
+
 - **No Performance Impact**: Same functionality, cleaner code
 - **Potential for Optimization**: Easier to memoize individual components
 - **Tree Shaking**: Unused components can be eliminated
@@ -132,12 +148,14 @@ GroupDetail/
 ## Usage Example
 
 ### Before (Monolithic)
+
 ```tsx
 // Everything was in one 500+ line file
 <AddExpenseModal ... />
 ```
 
 ### After (Componentized)
+
 ```tsx
 // Main modal uses composable components
 <AddExpenseModal ...>
@@ -164,6 +182,7 @@ GroupDetail/
 ## Future Improvements
 
 ### Potential Next Steps:
+
 1. Create a base `ExpenseModal` wrapper to reduce duplication between Add/Edit
 2. Extract split type selector into its own component
 3. Add unit tests for new components
@@ -174,13 +193,12 @@ GroupDetail/
 
 ## Summary
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **AddExpenseModal** | 552 lines | 235 lines | -57% |
-| **EditExpenseModal** | 608 lines | 277 lines | -54% |
-| **Total Lines** | 1,160 lines | 854 lines | -26% |
-| **Components** | 2 | 5 | +3 reusable |
-| **Code Duplication** | High | None | 100% eliminated |
+| Metric               | Before      | After     | Improvement     |
+| -------------------- | ----------- | --------- | --------------- |
+| **AddExpenseModal**  | 552 lines   | 235 lines | -57%            |
+| **EditExpenseModal** | 608 lines   | 277 lines | -54%            |
+| **Total Lines**      | 1,160 lines | 854 lines | -26%            |
+| **Components**       | 2           | 5         | +3 reusable     |
+| **Code Duplication** | High        | None      | 100% eliminated |
 
 **Total Impact:** Removed 306 lines of duplicate code while improving maintainability and reusability! 🎉
-

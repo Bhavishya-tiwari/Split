@@ -10,23 +10,20 @@ export async function GET(
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get group ID from dynamic route params
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json(
-        { error: 'Group ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
     }
 
     // Use service role client to bypass RLS
@@ -41,10 +38,7 @@ export async function GET(
       .single();
 
     if (membershipError || !userMembership) {
-      return NextResponse.json(
-        { error: 'You are not a member of this group' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'You are not a member of this group' }, { status: 403 });
     }
 
     // 2. Fetch all members of the group with their profile details
@@ -55,22 +49,19 @@ export async function GET(
 
     if (membersError) {
       console.error('Error fetching members:', membersError);
-      return NextResponse.json(
-        { error: 'Failed to fetch members' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 });
     }
 
-    return NextResponse.json({ 
-      members: membersData,
-      userRole: userMembership.role
-    }, { status: 200 });
+    return NextResponse.json(
+      {
+        members: membersData,
+        userRole: userMembership.role,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Error in GET /api/groups/[groupId]/members:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -82,23 +73,20 @@ export async function POST(
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get group ID from dynamic route params
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json(
-        { error: 'Group ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
     }
 
     // Parse request body
@@ -106,19 +94,13 @@ export async function POST(
     const { email } = body;
 
     if (!email) {
-      return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
     // Use service role client for database operations
@@ -133,17 +115,11 @@ export async function POST(
       .single();
 
     if (requestingUserError || !requestingUserMembership) {
-      return NextResponse.json(
-        { error: 'You are not a member of this group' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'You are not a member of this group' }, { status: 403 });
     }
 
     if (requestingUserMembership.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Only group admins can add members' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Only group admins can add members' }, { status: 403 });
     }
 
     // 2. Check if the user exists in the profiles table
@@ -181,32 +157,26 @@ export async function POST(
       .insert({
         user_id: profileData.id,
         group_id: groupId,
-        role: 'member'
+        role: 'member',
       })
       .select('id, role, joined_at, profiles(id, display_name:full_name, email)')
       .single();
 
     if (insertError) {
       console.error('Error adding member:', insertError);
-      return NextResponse.json(
-        { error: 'Failed to add member to group' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to add member to group' }, { status: 500 });
     }
 
     return NextResponse.json(
-      { 
+      {
         message: 'Member added successfully',
-        member: newMembership
+        member: newMembership,
       },
       { status: 201 }
     );
   } catch (error) {
     console.error('Error in POST /api/groups/[groupId]/members:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -218,23 +188,20 @@ export async function DELETE(
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get group ID from dynamic route params
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json(
-        { error: 'Group ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
     }
 
     // Get member ID from query params
@@ -242,10 +209,7 @@ export async function DELETE(
     const memberIdToRemove = searchParams.get('member_id');
 
     if (!memberIdToRemove) {
-      return NextResponse.json(
-        { error: 'Member ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
     }
 
     // Use service role client for database operations
@@ -260,17 +224,11 @@ export async function DELETE(
       .single();
 
     if (requestingUserError || !requestingUserMembership) {
-      return NextResponse.json(
-        { error: 'You are not a member of this group' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'You are not a member of this group' }, { status: 403 });
     }
 
     if (requestingUserMembership.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Only group admins can remove members' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Only group admins can remove members' }, { status: 403 });
     }
 
     // 2. Get the membership record to be deleted
@@ -282,10 +240,7 @@ export async function DELETE(
       .single();
 
     if (membershipError || !membershipToRemove) {
-      return NextResponse.json(
-        { error: 'Member not found in this group' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Member not found in this group' }, { status: 404 });
     }
 
     // 3. Prevent users from removing themselves
@@ -306,15 +261,12 @@ export async function DELETE(
 
       if (countError) {
         console.error('Error counting admins:', countError);
-        return NextResponse.json(
-          { error: 'Failed to verify admin count' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to verify admin count' }, { status: 500 });
       }
 
       // Use count property from the response
       const count = (adminCount as unknown as { count: number }).count;
-      
+
       if (count <= 1) {
         return NextResponse.json(
           { error: 'Cannot remove the last admin. Please promote another member to admin first.' },
@@ -334,17 +286,15 @@ export async function DELETE(
 
     if (payerCheckError) {
       console.error('Error checking payer expenses:', payerCheckError);
-      return NextResponse.json(
-        { error: 'Failed to verify expense involvement' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to verify expense involvement' }, { status: 500 });
     }
 
     if (payerExpenses && payerExpenses.length > 0) {
       return NextResponse.json(
-        { 
-          error: 'Cannot remove member who has paid for expenses in this group. Please delete or reassign their expenses first.',
-          hasExpenses: true
+        {
+          error:
+            'Cannot remove member who has paid for expenses in this group. Please delete or reassign their expenses first.',
+          hasExpenses: true,
         },
         { status: 400 }
       );
@@ -360,17 +310,15 @@ export async function DELETE(
 
     if (splitCheckError) {
       console.error('Error checking split expenses:', splitCheckError);
-      return NextResponse.json(
-        { error: 'Failed to verify expense involvement' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to verify expense involvement' }, { status: 500 });
     }
 
     if (splitExpenses && splitExpenses.length > 0) {
       return NextResponse.json(
-        { 
-          error: 'Cannot remove member who is part of expense splits in this group. Please delete or reassign their expenses first.',
-          hasExpenses: true
+        {
+          error:
+            'Cannot remove member who is part of expense splits in this group. Please delete or reassign their expenses first.',
+          hasExpenses: true,
         },
         { status: 400 }
       );
@@ -385,22 +333,12 @@ export async function DELETE(
 
     if (deleteError) {
       console.error('Error removing member:', deleteError);
-      return NextResponse.json(
-        { error: 'Failed to remove member from group' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to remove member from group' }, { status: 500 });
     }
 
-    return NextResponse.json(
-      { message: 'Member removed successfully' },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: 'Member removed successfully' }, { status: 200 });
   } catch (error) {
     console.error('Error in DELETE /api/groups/[groupId]/members:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
