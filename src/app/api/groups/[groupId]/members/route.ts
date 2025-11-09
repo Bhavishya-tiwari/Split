@@ -3,7 +3,10 @@ import { createClientForServer } from '@/utils/supabase/server';
 import { createServiceRoleClient } from '@/utils/supabase/service';
 
 // GET - Fetch all members of a group
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ groupId: string }> }
+) {
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
@@ -16,9 +19,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get group ID from query params
-    const { searchParams } = new URL(request.url);
-    const groupId = searchParams.get('group_id');
+    // Get group ID from dynamic route params
+    const { groupId } = await params;
 
     if (!groupId) {
       return NextResponse.json(
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest) {
       userRole: userMembership.role
     }, { status: 200 });
   } catch (error) {
-    console.error('Error in GET /api/groups/members:', error);
+    console.error('Error in GET /api/groups/[groupId]/members:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -73,7 +75,10 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Add a new member to a group
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ groupId: string }> }
+) {
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
@@ -86,13 +91,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get group ID from dynamic route params
+    const { groupId } = await params;
+
+    if (!groupId) {
+      return NextResponse.json(
+        { error: 'Group ID is required' },
+        { status: 400 }
+      );
+    }
+
     // Parse request body
     const body = await request.json();
-    const { group_id, email } = body;
+    const { email } = body;
 
-    if (!group_id || !email) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'Group ID and email are required' },
+        { error: 'Email is required' },
         { status: 400 }
       );
     }
@@ -114,7 +129,7 @@ export async function POST(request: NextRequest) {
       .from('user_group_mapping')
       .select('role')
       .eq('user_id', user.id)
-      .eq('group_id', group_id)
+      .eq('group_id', groupId)
       .single();
 
     if (requestingUserError || !requestingUserMembership) {
@@ -150,7 +165,7 @@ export async function POST(request: NextRequest) {
       .from('user_group_mapping')
       .select('id')
       .eq('user_id', profileData.id)
-      .eq('group_id', group_id)
+      .eq('group_id', groupId)
       .maybeSingle();
 
     if (existingMembership) {
@@ -165,7 +180,7 @@ export async function POST(request: NextRequest) {
       .from('user_group_mapping')
       .insert({
         user_id: profileData.id,
-        group_id: group_id,
+        group_id: groupId,
         role: 'member'
       })
       .select('id, role, joined_at, profiles(id, display_name:full_name, email)')
@@ -187,7 +202,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error in POST /api/groups/members:', error);
+    console.error('Error in POST /api/groups/[groupId]/members:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -196,7 +211,10 @@ export async function POST(request: NextRequest) {
 }
 
 // DELETE - Remove a member from a group
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ groupId: string }> }
+) {
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
@@ -209,14 +227,23 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get parameters from query params
+    // Get group ID from dynamic route params
+    const { groupId } = await params;
+
+    if (!groupId) {
+      return NextResponse.json(
+        { error: 'Group ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get member ID from query params
     const { searchParams } = new URL(request.url);
-    const groupId = searchParams.get('group_id');
     const memberIdToRemove = searchParams.get('member_id');
 
-    if (!groupId || !memberIdToRemove) {
+    if (!memberIdToRemove) {
       return NextResponse.json(
-        { error: 'Group ID and member ID are required' },
+        { error: 'Member ID is required' },
         { status: 400 }
       );
     }
@@ -316,10 +343,11 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error in DELETE /api/groups/members:', error);
+    console.error('Error in DELETE /api/groups/[groupId]/members:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
+

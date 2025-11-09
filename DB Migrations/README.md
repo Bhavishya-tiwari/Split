@@ -123,6 +123,16 @@ Located in: `Triggers/`
 
 Sets up automatic `updated_at` timestamp updates for all tables whenever a row is modified. See `Triggers/README.md` for detailed documentation on all triggers.
 
+### 10. Database Functions (Optional but Recommended)
+Located in: `Functions/`
+
+```bash
+# Run in Supabase SQL Editor:
+1. upsert-expense-function.sql
+```
+
+Creates reusable PostgreSQL functions for complex operations. The `upsert_expense_from_json` function handles creating/updating expenses with payers and splits in a single atomic transaction. See `Functions/README.md` for detailed documentation and usage examples.
+
 ## 🧹 Cleanup (If Upgrading)
 
 If you previously had read policies on these tables, run:
@@ -153,6 +163,9 @@ DB Migrations/
 │   ├── README.md
 │   ├── profile-creation-trigger.sql
 │   └── automatic-updated-at-trigger.sql
+├── Functions/
+│   ├── README.md
+│   └── upsert-expense-function.sql
 ├── Users table/
 │   ├── README.md
 │   └── supabase-profiles-migration.sql
@@ -231,8 +244,8 @@ export const createServiceRoleClient = () => {
 ### Expenses API (`/api/expenses`)
 - `GET /api/expenses?group_id={id}` - Fetch all expenses for a group
 - `GET /api/expenses?id={id}` - Fetch single expense with payers and splits
-- `POST /api/expenses` - Create a new expense with payers and splits
-- `PUT /api/expenses` - Update expense details
+- `POST /api/expenses` - Create a new expense with payers and splits (uses `upsert_expense_from_json` function)
+- `PUT /api/expenses` - Update expense details (uses `upsert_expense_from_json` function)
 - `DELETE /api/expenses?id={id}` - Delete an expense (cascades to payers and splits)
 
 ## 📚 Additional Resources
