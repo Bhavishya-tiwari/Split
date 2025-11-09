@@ -5,4 +5,3 @@ export { default as EmptyGroupsState } from './EmptyGroupsState';
 export { default as LoadingState } from './LoadingState';
 export { default as GroupsHeader } from './GroupsHeader';
 export type { Group } from './types';
-

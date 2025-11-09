@@ -1,6 +1,6 @@
 /**
  * React Query hooks for Groups
- * 
+ *
  * Provides:
  * - Automatic caching
  * - Loading/error states
@@ -96,18 +96,21 @@ export function useCreateGroup() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create group');
       }
-      
+
       const result = await response.json();
       return result.group as Group;
     },
     onSuccess: () => {
-      // Invalidate and refetch groups list
-      queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
+      // Invalidate and refetch groups list immediately
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.lists(),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -125,20 +128,29 @@ export function useUpdateGroup() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to update group');
       }
-      
+
       const result = await response.json();
       return result.group as Group;
     },
     onSuccess: (_, variables) => {
-      // Invalidate specific group and groups list
-      queryClient.invalidateQueries({ queryKey: groupKeys.detail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: groupKeys.summary(variables.id) });
-      queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
+      // Invalidate specific group and groups list immediately
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.detail(variables.id),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(variables.id),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.lists(),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -154,16 +166,18 @@ export function useDeleteGroup() {
       const response = await fetch(`/api/groups?id=${groupId}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete group');
       }
     },
     onSuccess: () => {
-      // Invalidate groups list
-      queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
+      // Invalidate groups list immediately
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.lists(),
+        refetchType: 'active'
+      });
     },
   });
 }
-

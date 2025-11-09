@@ -28,11 +28,11 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
         onClick={onClose}
       ></div>
-      
+
       {/* Menu Panel */}
       <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform transition-transform">
         <div className="flex flex-col h-full">
@@ -75,4 +75,3 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
     </>
   );
 }
-

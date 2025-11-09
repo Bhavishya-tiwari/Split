@@ -23,9 +23,11 @@ GroupDetail/
 ## Components
 
 ### GroupHeader
+
 Displays the group's name, description, creation date, and a settings button for admins.
 
 **Props:**
+
 - `name`: string - Group name
 - `description`: string | null - Group description
 - `createdAt`: string - ISO date string
@@ -35,22 +37,27 @@ Displays the group's name, description, creation date, and a settings button for
 ---
 
 ### ExpensesSection
+
 Shows the list of expenses with an empty state and add expense button.
 
 **Props:**
+
 - `onAddExpense`: () => void - Callback when add expense button is clicked
 
 ---
 
 ### MembersCard
+
 Displays a summary card of group members with modal functionality. **Compartmentalized into 3 sub-components.**
 
 **Props:**
+
 - `members`: GroupMember[] - Array of group members
 - `isAdmin`: boolean - Whether the current user is an admin
 - `onAddMember`: () => void - Callback when add member button is clicked
 
 **Sub-components:**
+
 - `MembersModal` - Full-screen modal showing all members
 - `MemberListItem` - Reusable component for displaying individual members
 
@@ -59,9 +66,11 @@ Displays a summary card of group members with modal functionality. **Compartment
 ---
 
 ### GroupStatsCard
+
 Shows statistics about the group (expenses count, total amount, user's share).
 
 **Props:**
+
 - `totalExpenses?`: number - Total number of expenses (default: 0)
 - `totalAmount?`: string - Total amount spent (default: '$0.00')
 - `yourShare?`: string - User's share (default: '$0.00')
@@ -69,9 +78,11 @@ Shows statistics about the group (expenses count, total amount, user's share).
 ---
 
 ### SettingsModal
+
 Modal with options to edit or delete the group.
 
 **Props:**
+
 - `isOpen`: boolean - Whether the modal is visible
 - `isDeleting`: boolean - Whether a delete operation is in progress
 - `onClose`: () => void - Callback to close the modal
@@ -81,9 +92,11 @@ Modal with options to edit or delete the group.
 ---
 
 ### EditGroupModal
+
 Modal for editing group name and description.
 
 **Props:**
+
 - `isOpen`: boolean - Whether the modal is visible
 - `isUpdating`: boolean - Whether an update operation is in progress
 - `formData`: { name: string, description: string } - Form data
@@ -97,6 +110,7 @@ Modal for editing group name and description.
 ## Types
 
 ### Group
+
 ```typescript
 interface Group {
   id: string;
@@ -109,6 +123,7 @@ interface Group {
 ```
 
 ### GroupMember
+
 ```typescript
 interface GroupMember {
   id: string;
@@ -129,13 +144,13 @@ import {
   GroupHeader,
   ExpensesSection,
   MembersCard,
-  MembersModal,        // Available if needed separately
-  MemberListItem,      // Available if needed separately
+  MembersModal, // Available if needed separately
+  MemberListItem, // Available if needed separately
   GroupStatsCard,
   SettingsModal,
   EditGroupModal,
   Group,
-  GroupMember
+  GroupMember,
 } from '@/components/Groups/GroupDetail';
 
 // Use the components in your page
@@ -145,7 +160,7 @@ import {
   createdAt={group.created_at}
   isAdmin={userRole === 'admin'}
   onSettingsClick={() => setShowSettingsModal(true)}
-/>
+/>;
 ```
 
 ## Design Principles
@@ -155,4 +170,3 @@ import {
 3. **Type Safety**: All props are properly typed with TypeScript
 4. **Composition**: Components can be composed together easily
 5. **Clean Separation**: Business logic stays in the page, UI in components
-

@@ -5,9 +5,11 @@ This directory contains compartmentalized components for displaying and managing
 ## Component Structure
 
 ### 1. **MembersCard.tsx** (Main Component)
+
 The entry point component that displays a summary card of group members.
 
 **Features:**
+
 - Shows total member count
 - Displays first 3 members
 - Shows "+X more members" indicator
@@ -15,6 +17,7 @@ The entry point component that displays a summary card of group members.
 - Clean, focused responsibility
 
 **Props:**
+
 ```typescript
 {
   members: GroupMember[];
@@ -24,26 +27,26 @@ The entry point component that displays a summary card of group members.
 ```
 
 **Usage:**
+
 ```tsx
-<MembersCard
-  members={groupMembers}
-  isAdmin={userRole === 'admin'}
-  onAddMember={handleAddMember}
-/>
+<MembersCard members={groupMembers} isAdmin={userRole === 'admin'} onAddMember={handleAddMember} />
 ```
 
 ---
 
 ### 2. **MembersModal.tsx** (Modal Component)
+
 A full-screen modal that displays all group members in detail.
 
 **Features:**
+
 - Shows complete list of all members
 - Scrollable list for large groups
 - Add member button (admin only)
 - Close button and backdrop click to dismiss
 
 **Props:**
+
 ```typescript
 {
   isOpen: boolean;
@@ -57,14 +60,17 @@ A full-screen modal that displays all group members in detail.
 ---
 
 ### 3. **MemberListItem.tsx** (Reusable Item Component)
+
 A flexible component for displaying individual member information.
 
 **Features:**
+
 - Two variants: `compact` and `detailed`
 - Compact: Used in the card preview (shows name, role, avatar)
 - Detailed: Used in the modal (shows name, email, join date, role badge)
 
 **Props:**
+
 ```typescript
 {
   member: GroupMember;
@@ -73,6 +79,7 @@ A flexible component for displaying individual member information.
 ```
 
 **Usage:**
+
 ```tsx
 // Compact variant
 <MemberListItem member={member} variant="compact" />
@@ -125,4 +132,3 @@ MembersCard (manages modal state)
 - Add member removal functionality
 - Add member invitation flow
 - Add loading states for async operations
-

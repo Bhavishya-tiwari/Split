@@ -18,7 +18,7 @@ export default function Navbar({ onMenuOpen }: NavbarProps) {
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Split</h1>
           </div>
-          
+
           {/* Menu Icon */}
           <button
             onClick={onMenuOpen}
@@ -32,4 +32,3 @@ export default function Navbar({ onMenuOpen }: NavbarProps) {
     </header>
   );
 }
-

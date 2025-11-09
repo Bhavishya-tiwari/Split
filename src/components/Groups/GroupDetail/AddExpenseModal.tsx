@@ -39,23 +39,28 @@ export default function AddExpenseModal({
   members,
   groupId,
   currentUserId,
-  onExpenseAdded
+  onExpenseAdded,
 }: AddExpenseModalProps) {
   const [submitError, setSubmitError] = useState('');
   const [splitType, setSplitType] = useState<SplitType>(DEFAULT_SPLIT_TYPE);
   const [selectedSplitMembers, setSelectedSplitMembers] = useState<Set<string>>(new Set());
   const [exactAmounts, setExactAmounts] = useState<Record<string, string>>({});
-  
+
   // REACT QUERY: Use mutation hook instead of direct fetch
   const createExpense = useCreateExpense(groupId);
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<ExpenseFormData>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<ExpenseFormData>({
     defaultValues: {
       title: '',
       currency: DEFAULT_CURRENCY,
       paidBy: currentUserId || '',
       amount: '',
-    }
+    },
   });
 
   const amount = watch('amount');
@@ -106,7 +111,9 @@ export default function AddExpenseModal({
       }
 
       if (memberIds.length === 1 && memberIds[0] === paidBy) {
-        throw new Error('Cannot split an expense only to the payer. Please include at least one other member.');
+        throw new Error(
+          'Cannot split an expense only to the payer. Please include at least one other member.'
+        );
       }
 
       let splits;
@@ -114,13 +121,14 @@ export default function AddExpenseModal({
         const baseAmount = Math.floor((totalAmount / memberIds.length) * 100) / 100; // Round down to 2 decimals
         const totalBase = baseAmount * memberIds.length;
         const remainder = Math.round((totalAmount - totalBase) * 100) / 100; // Calculate remainder
-        
+
         splits = memberIds.map((userId, index) => {
           // Add remainder to the last split to ensure exact total
-          const amount = index === memberIds.length - 1 
-            ? parseFloat((baseAmount + remainder).toFixed(2))
-            : parseFloat(baseAmount.toFixed(2));
-          
+          const amount =
+            index === memberIds.length - 1
+              ? parseFloat((baseAmount + remainder).toFixed(2))
+              : parseFloat(baseAmount.toFixed(2));
+
           return {
             user_id: userId,
             amount: amount,
@@ -132,7 +140,7 @@ export default function AddExpenseModal({
         if (Math.abs(totalExact - totalAmount) > 0.01) {
           throw new Error(`Exact amounts must equal total paid`);
         }
-        splits = memberIds.map(userId => ({
+        splits = memberIds.map((userId) => ({
           user_id: userId,
           amount: parseFloat(exactAmounts[userId]),
           split_type: SplitType.EXACT,
@@ -140,25 +148,16 @@ export default function AddExpenseModal({
       }
 
       const expenseData = {
-        group_id: groupId,
         title: data.title.trim(),
         currency: data.currency,
         paid_by: data.paidBy,
         amount: totalAmount,
-        splits
+        splits,
       };
 
-      const response = await fetch(`/api/groups/${groupId}/expenses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(expenseData),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create expense');
-      }
-      
+      // REACT QUERY: Use mutation (this sets isPending automatically)
+      await createExpense.mutateAsync(expenseData);
+
       if (onExpenseAdded) onExpenseAdded();
       handleClose();
     } catch (err: unknown) {
@@ -170,12 +169,18 @@ export default function AddExpenseModal({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={handleClose} />
-        
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          onClick={handleClose}
+        />
+
         <div className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900">Add New Expense</h2>
-            <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
               <X className="h-6 w-6" />
             </button>
           </div>
@@ -221,7 +226,9 @@ export default function AddExpenseModal({
                   disabled={createExpense.isPending}
                 >
                   {Object.entries(SPLIT_TYPE_CONFIG).map(([type, config]) => (
-                    <option key={type} value={type}>{config.label}</option>
+                    <option key={type} value={type}>
+                      {config.label}
+                    </option>
                   ))}
                 </select>
                 <p className="text-sm text-gray-500 mt-2">{getSplitTypeDescription(splitType)}</p>
@@ -246,11 +253,16 @@ export default function AddExpenseModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={createExpense.isPending || selectedSplitMembers.size === 0 || (selectedSplitMembers.size === 1 && Array.from(selectedSplitMembers)[0] === paidBy)}
+                  disabled={
+                    createExpense.isPending ||
+                    selectedSplitMembers.size === 0 ||
+                    (selectedSplitMembers.size === 1 &&
+                      Array.from(selectedSplitMembers)[0] === paidBy)
+                  }
                   className="flex-1 px-4 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-            {createExpense.isPending ? 'Creating...' : 'Create Expense'}
-          </button>
+                  {createExpense.isPending ? 'Creating...' : 'Create Expense'}
+                </button>
               </div>
             </div>
           </form>
@@ -259,4 +271,3 @@ export default function AddExpenseModal({
     </div>
   );
 }
-

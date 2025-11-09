@@ -26,7 +26,7 @@ export default function ExpenseFormFields({
   members,
   isDisabled,
   watchedAmount,
-  watchedCurrency
+  watchedCurrency,
 }: ExpenseFormFieldsProps) {
   const totalPaid = parseFloat(watchedAmount) || 0;
 
@@ -44,16 +44,14 @@ export default function ExpenseFormFields({
             required: 'Title is required',
             minLength: {
               value: 3,
-              message: 'Title must be at least 3 characters'
-            }
+              message: 'Title must be at least 3 characters',
+            },
           })}
           placeholder="e.g., Dinner at restaurant, Movie tickets"
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:text-gray-700"
           disabled={isDisabled}
         />
-        {errors.title && (
-          <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>
-        )}
+        {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>}
       </div>
 
       {/* Currency */}
@@ -84,7 +82,7 @@ export default function ExpenseFormFields({
           <select
             id="paidBy"
             {...register('paidBy', {
-              required: 'Please select who paid'
+              required: 'Please select who paid',
             })}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:text-gray-700"
             disabled={isDisabled}
@@ -96,9 +94,7 @@ export default function ExpenseFormFields({
               </option>
             ))}
           </select>
-          {errors.paidBy && (
-            <p className="text-red-600 text-sm mt-1">{errors.paidBy.message}</p>
-          )}
+          {errors.paidBy && <p className="text-red-600 text-sm mt-1">{errors.paidBy.message}</p>}
         </div>
 
         <div>
@@ -115,17 +111,15 @@ export default function ExpenseFormFields({
               required: 'Amount is required',
               min: {
                 value: 0.01,
-                message: 'Amount must be greater than 0'
-              }
+                message: 'Amount must be greater than 0',
+              },
             })}
             onWheel={(e) => e.currentTarget.blur()}
             onTouchMove={(e) => e.currentTarget.blur()}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:text-gray-700"
             disabled={isDisabled}
           />
-          {errors.amount && (
-            <p className="text-red-600 text-sm mt-1">{errors.amount.message}</p>
-          )}
+          {errors.amount && <p className="text-red-600 text-sm mt-1">{errors.amount.message}</p>}
         </div>
       </div>
 
@@ -140,4 +134,3 @@ export default function ExpenseFormFields({
     </>
   );
 }
-

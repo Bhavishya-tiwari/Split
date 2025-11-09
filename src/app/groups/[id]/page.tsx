@@ -12,7 +12,7 @@ import {
   SettingsModal,
   EditGroupModal,
   Group,
-  GroupMember
+  GroupMember,
 } from '@/components/Groups/GroupDetail';
 
 export default function GroupDetailPage() {
@@ -40,7 +40,9 @@ export default function GroupDetailPage() {
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClientForBrowser();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
         router.push('/');
@@ -49,7 +51,7 @@ export default function GroupDetailPage() {
 
       setCurrentUserId(user.id);
     };
-    
+
     checkAuth();
   }, [router]);
 
@@ -58,7 +60,7 @@ export default function GroupDetailPage() {
       setEditFormData({
         name: group.name,
         description: group.description || '',
-        icon: group.icon || 'Users'
+        icon: group.icon || 'Users',
       });
       setEditError('');
       setShowSettingsModal(false);
@@ -75,7 +77,7 @@ export default function GroupDetailPage() {
         id: groupId,
         name: data.name,
         description: data.description,
-        icon: data.icon
+        icon: data.icon,
       });
 
       setShowEditModal(false);
@@ -96,7 +98,7 @@ export default function GroupDetailPage() {
     try {
       // REACT QUERY: Automatic cache invalidation
       await deleteGroupMutation.mutateAsync(groupId);
-      
+
       // Success - redirect to groups page
       router.push('/groups');
     } catch (err: unknown) {
@@ -122,14 +124,28 @@ export default function GroupDetailPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-xl shadow-md border border-gray-200 p-12 text-center">
           <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-red-600">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-8 h-8 text-red-600"
+            >
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="15" y1="9" x2="9" y2="15"></line>
               <line x1="9" y1="9" x2="15" y2="15"></line>
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">{error?.message || 'Group not found'}</h3>
-          <p className="text-gray-600 mb-6">The group you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            {error?.message || 'Group not found'}
+          </h3>
+          <p className="text-gray-600 mb-6">
+            The group you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to
+            it.
+          </p>
           <button
             onClick={() => router.push('/groups')}
             className="px-6 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md"
@@ -162,11 +178,7 @@ export default function GroupDetailPage() {
         <GroupStatsCard />
       </div>
 
-      <ExpensesSection
-        members={members}
-        groupId={groupId}
-        currentUserId={currentUserId}
-      />
+      <ExpensesSection members={members} groupId={groupId} currentUserId={currentUserId} />
 
       <SettingsModal
         isOpen={showSettingsModal}
@@ -187,4 +199,3 @@ export default function GroupDetailPage() {
     </div>
   );
 }
-

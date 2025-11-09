@@ -1,6 +1,6 @@
 /**
  * React Query hooks for Expenses
- * 
+ *
  * Provides:
  * - Automatic caching with pagination
  * - Loading/error states
@@ -9,6 +9,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { groupKeys } from './useGroups';
 
 // Query Keys
 export const expenseKeys = {
@@ -75,12 +76,12 @@ export function useExpenses(groupId: string, page: number = 1, limit: number = 5
     queryFn: async () => {
       const url = `/api/groups/${groupId}/expenses?page=${page}&limit=${limit}`;
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to fetch expenses');
       }
-      
+
       return response.json() as Promise<ExpensesResponse>;
     },
     staleTime: 30 * 1000, // 30 seconds
@@ -112,20 +113,26 @@ export function useCreateExpense(groupId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create expense');
       }
-      
+
       const result = await response.json();
       return result.expense as Expense;
     },
     onSuccess: () => {
-      // Invalidate all expense pages for this group
-      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
-      // Also invalidate group summary
-      queryClient.invalidateQueries({ queryKey: ['groups', 'summary', groupId] });
+      // Invalidate and refetch all expense pages immediately
+      queryClient.invalidateQueries({ 
+        queryKey: expenseKeys.lists(),
+        refetchType: 'active' // Refetch active queries immediately
+      });
+      // Also invalidate group summary to show updated data
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -154,20 +161,26 @@ export function useUpdateExpense(groupId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to update expense');
       }
-      
+
       const result = await response.json();
       return result.expense as Expense;
     },
     onSuccess: () => {
-      // Invalidate all expense pages for this group
-      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
-      // Also invalidate group summary
-      queryClient.invalidateQueries({ queryKey: ['groups', 'summary', groupId] });
+      // Invalidate and refetch all expense pages immediately
+      queryClient.invalidateQueries({ 
+        queryKey: expenseKeys.lists(),
+        refetchType: 'active' // Refetch active queries immediately
+      });
+      // Also invalidate group summary to show updated data
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -183,18 +196,23 @@ export function useDeleteExpense(groupId: string) {
       const response = await fetch(`/api/groups/${groupId}/expenses?expense_id=${expenseId}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete expense');
       }
     },
     onSuccess: () => {
-      // Invalidate all expense pages for this group
-      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
-      // Also invalidate group summary
-      queryClient.invalidateQueries({ queryKey: ['groups', 'summary', groupId] });
+      // Invalidate and refetch all expense pages immediately
+      queryClient.invalidateQueries({ 
+        queryKey: expenseKeys.lists(),
+        refetchType: 'active' // Refetch active queries immediately
+      });
+      // Also invalidate group summary to show updated data
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active'
+      });
     },
   });
 }
-

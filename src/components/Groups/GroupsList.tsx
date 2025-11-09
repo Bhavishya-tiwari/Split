@@ -16,4 +16,3 @@ export default function GroupsList({ groups }: GroupsListProps) {
     </div>
   );
 }
-

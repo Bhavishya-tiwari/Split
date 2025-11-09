@@ -15,7 +15,7 @@ import {
 export default function GroupsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const router = useRouter();
-  
+
   // REACT QUERY: Automatic caching, loading states, and refetching
   const { data: groups = [], isLoading, error } = useGroups();
 
@@ -23,8 +23,10 @@ export default function GroupsPage() {
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClientForBrowser();
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         router.push('/');
       }
@@ -64,4 +66,3 @@ export default function GroupsPage() {
     </div>
   );
 }
-

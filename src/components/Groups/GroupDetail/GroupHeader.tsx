@@ -16,7 +16,7 @@ export default function GroupHeader({
   icon,
   createdAt,
   isAdmin,
-  onSettingsClick
+  onSettingsClick,
 }: GroupHeaderProps) {
   const IconComponent = getGroupIcon(icon);
 
@@ -29,9 +29,7 @@ export default function GroupHeader({
           </div>
           <div className="flex-1">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">{name}</h2>
-            {description && (
-              <p className="text-gray-600 mb-2">{description}</p>
-            )}
+            {description && <p className="text-gray-600 mb-2">{description}</p>}
             <p className="text-sm text-gray-400">
               Created {new Date(createdAt).toLocaleDateString()}
             </p>
@@ -50,4 +48,3 @@ export default function GroupHeader({
     </div>
   );
 }
-

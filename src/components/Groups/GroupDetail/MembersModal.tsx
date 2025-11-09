@@ -4,6 +4,7 @@ import { GroupMember } from './types';
 import MemberListItem from './MemberListItem';
 import { X, Plus } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { groupKeys } from '@/hooks/useGroups';
 
 interface MembersModalProps {
   isOpen: boolean;
@@ -18,10 +19,10 @@ interface AddMemberFormData {
   email: string;
 }
 
-export default function MembersModal({ 
-  isOpen, 
-  onClose, 
-  members, 
+export default function MembersModal({
+  isOpen,
+  onClose,
+  members,
   isAdmin,
   groupId,
   currentUserId,
@@ -33,10 +34,15 @@ export default function MembersModal({
   const [addError, setAddError] = useState('');
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<AddMemberFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AddMemberFormData>({
     defaultValues: {
-      email: ''
-    }
+      email: '',
+    },
   });
 
   if (!isOpen) return null;
@@ -60,8 +66,11 @@ export default function MembersModal({
       await response.json();
 
       // REACT QUERY: Invalidate cache to refetch members automatically
-      queryClient.invalidateQueries({ queryKey: ['group-summary', groupId] });
-      
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active' // Refetch immediately to show new member
+      });
+
       // Close the add member modal and reset form
       setShowAddMemberModal(false);
       reset();
@@ -75,9 +84,9 @@ export default function MembersModal({
   };
 
   const handleMemberDeletion = async (memberId: string) => {
-    const memberToDelete = members.find(m => m.id === memberId);
+    const memberToDelete = members.find((m) => m.id === memberId);
     const memberName = memberToDelete?.profiles.display_name || memberToDelete?.profiles.email;
-    
+
     if (!confirm(`Are you sure you want to remove ${memberName} from this group?`)) {
       return;
     }
@@ -95,7 +104,10 @@ export default function MembersModal({
       }
 
       // REACT QUERY: Invalidate cache to refetch members automatically
-      queryClient.invalidateQueries({ queryKey: ['group-summary', groupId] });
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active' // Refetch immediately to show new member
+      });
     } catch (err: unknown) {
       console.error('Error removing member:', err);
       const errorMessage = err instanceof Error ? err.message : undefined;
@@ -109,11 +121,11 @@ export default function MembersModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
           onClick={onClose}
         />
-        
+
         {/* Modal */}
         <div className="relative bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
           {/* Header */}
@@ -169,7 +181,7 @@ export default function MembersModal({
         <div className="fixed inset-0 z-60 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
             {/* Backdrop */}
-            <div 
+            <div
               className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
               onClick={() => {
                 setShowAddMemberModal(false);
@@ -177,7 +189,7 @@ export default function MembersModal({
                 setAddError('');
               }}
             />
-            
+
             {/* Modal */}
             <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full">
               {/* Header */}
@@ -209,8 +221,8 @@ export default function MembersModal({
                       required: 'Email is required',
                       pattern: {
                         value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        message: 'Please enter a valid email address'
-                      }
+                        message: 'Please enter a valid email address',
+                      },
                     })}
                     placeholder="user@example.com"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
@@ -259,4 +271,3 @@ export default function MembersModal({
     </div>
   );
 }
-

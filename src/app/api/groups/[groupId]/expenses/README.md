@@ -23,6 +23,7 @@ Retrieves all expenses for a specific group.
 **Authorization:** User must be a member of the group
 
 **Response:**
+
 ```json
 {
   "expenses": [
@@ -42,7 +43,7 @@ Retrieves all expenses for a specific group.
       "expense_payers": [
         {
           "id": "uuid",
-          "amount": 1000.00,
+          "amount": 1000.0,
           "paid_by": "uuid",
           "payer_profile": {
             "id": "uuid",
@@ -55,7 +56,7 @@ Retrieves all expenses for a specific group.
         {
           "id": "uuid",
           "user_id": "uuid",
-          "amount": 500.00,
+          "amount": 500.0,
           "split_type": "equal",
           "percentage": null,
           "shares": null,
@@ -73,6 +74,7 @@ Retrieves all expenses for a specific group.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - User is not authenticated
 - `403 Forbidden` - User is not a member of the group
 - `500 Internal Server Error` - Server error
@@ -90,21 +92,22 @@ Creates a new expense in the group.
 **Authorization:** User must be a member of the group
 
 **Request Body:**
+
 ```json
 {
   "title": "Dinner at Restaurant",
   "currency": "INR",
   "paid_by": "uuid",
-  "amount": 1000.00,
+  "amount": 1000.0,
   "splits": [
     {
       "user_id": "uuid",
-      "amount": 500.00,
+      "amount": 500.0,
       "split_type": "equal"
     },
     {
       "user_id": "uuid",
-      "amount": 500.00,
+      "amount": 500.0,
       "split_type": "equal"
     }
   ]
@@ -112,6 +115,7 @@ Creates a new expense in the group.
 ```
 
 **Validation Rules:**
+
 1. `title` is required (minimum 3 characters)
 2. `paid_by` must be a valid user ID and member of the group
 3. `amount` must be a positive number
@@ -121,6 +125,7 @@ Creates a new expense in the group.
 7. **Cannot split an expense only to the payer** - at least one other person must be included in splits
 
 **Response:**
+
 ```json
 {
   "message": "Expense created successfully",
@@ -131,6 +136,7 @@ Creates a new expense in the group.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request` - Validation failed
 - `401 Unauthorized` - User is not authenticated
 - `403 Forbidden` - User is not a member of the group
@@ -149,22 +155,23 @@ Updates an existing expense.
 **Authorization:** User must be a member of the group
 
 **Request Body:**
+
 ```json
 {
   "expense_id": "uuid",
   "title": "Updated Dinner at Restaurant",
   "currency": "INR",
   "paid_by": "uuid",
-  "amount": 1200.00,
+  "amount": 1200.0,
   "splits": [
     {
       "user_id": "uuid",
-      "amount": 600.00,
+      "amount": 600.0,
       "split_type": "equal"
     },
     {
       "user_id": "uuid",
-      "amount": 600.00,
+      "amount": 600.0,
       "split_type": "equal"
     }
   ]
@@ -172,11 +179,13 @@ Updates an existing expense.
 ```
 
 **Validation Rules:**
+
 - Same as POST endpoint
 - `expense_id` is required
 - Expense must exist and belong to the specified group
 
 **Response:**
+
 ```json
 {
   "message": "Expense updated successfully",
@@ -187,6 +196,7 @@ Updates an existing expense.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request` - Validation failed or expense doesn't belong to group
 - `401 Unauthorized` - User is not authenticated
 - `403 Forbidden` - User is not a member of the group
@@ -206,9 +216,11 @@ Deletes an expense (cascades to delete related payers and splits).
 **Authorization:** User must be a member of the group
 
 **Query Parameters:**
+
 - `expense_id` (required) - UUID of the expense to delete
 
 **Response:**
+
 ```json
 {
   "message": "Expense deleted successfully"
@@ -216,6 +228,7 @@ Deletes an expense (cascades to delete related payers and splits).
 ```
 
 **Error Responses:**
+
 - `400 Bad Request` - Missing expense_id or expense doesn't belong to group
 - `401 Unauthorized` - User is not authenticated
 - `403 Forbidden` - User is not a member of the group
@@ -238,7 +251,8 @@ Validates if a user is a member of a group.
 
 Validates if all provided user IDs are members of the group.
 
-**Returns:** 
+**Returns:**
+
 ```typescript
 {
   valid: boolean;
@@ -251,6 +265,7 @@ Validates if all provided user IDs are members of the group.
 Validates expense data structure and business rules.
 
 **Returns:**
+
 ```typescript
 {
   valid: boolean;
@@ -259,6 +274,7 @@ Validates expense data structure and business rules.
 ```
 
 **Validation Checks:**
+
 - Title is required and at least 3 characters
 - Group ID is required
 - Payer ID is required
@@ -281,6 +297,7 @@ All CREATE and UPDATE operations use the `upsert_expense_from_json` database fun
 5. Returns the expense UUID
 
 **Note:** The database function has been simplified to focus on data mutation only. All validation logic is handled by the API layer for:
+
 - Better separation of concerns
 - Single source of truth for business logic
 - Faster function execution
@@ -300,6 +317,7 @@ const response = await axios.post(`/api/groups/${groupId}/expenses`, expenseData
 ```
 
 Features:
+
 - Form validation
 - Equal and exact split types
 - Real-time split calculation
@@ -313,11 +331,12 @@ The modal component integrates with the PUT endpoint:
 ```typescript
 const response = await axios.put(`/api/groups/${groupId}/expenses`, {
   expense_id: expenseId,
-  ...expenseData
+  ...expenseData,
 });
 ```
 
 Features:
+
 - Pre-populates form with existing expense data
 - Same validation as create
 - Detects split type from existing data
@@ -339,6 +358,7 @@ await axios.delete(`/api/groups/${groupId}/expenses?expense_id=${expenseId}`);
 ```
 
 Features:
+
 - Loading states
 - Error handling
 - Empty state
@@ -375,6 +395,7 @@ These helper functions are designed to be reusable for future features:
 ## Security
 
 All endpoints:
+
 - ✅ Require authentication (Supabase auth)
 - ✅ Validate group membership
 - ✅ Use service role client to bypass RLS (controlled by API)
@@ -395,4 +416,3 @@ The API implements comprehensive error handling:
 5. **Server Errors** - Returns 500 with error logging
 
 All errors include descriptive messages to help with debugging.
-
