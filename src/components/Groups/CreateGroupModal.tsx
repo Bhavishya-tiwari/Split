@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
-import axios from 'axios';
+import { useCreateGroup } from '@/hooks/useGroups';
 import IconPicker from './IconPicker';
 
 interface CreateGroupModalProps {
@@ -19,9 +19,11 @@ interface FormData {
 }
 
 export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateGroupModalProps) {
-  const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('Users');
+  
+  // REACT QUERY: Automatic cache invalidation
+  const createGroupMutation = useCreateGroup();
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: {
@@ -33,10 +35,9 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
 
   const onSubmit = async (data: FormData) => {
     setError('');
-    setCreating(true);
 
     try {
-      await axios.post('/api/groups', {
+      await createGroupMutation.mutateAsync({
         ...data,
         icon: selectedIcon
       });
@@ -49,10 +50,8 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
       onSuccess();
     } catch (err: unknown) {
       console.error('Error creating group:', err);
-      const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
-      setError(errorMessage || 'Failed to create group');
-    } finally {
-      setCreating(false);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create group';
+      setError(errorMessage);
     }
   };
 
@@ -92,7 +91,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
               })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder="e.g., Weekend Trip"
-              disabled={creating}
+              disabled={createGroupMutation.isPending}
             />
             {errors.name && (
               <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
@@ -109,7 +108,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder="What's this group for?"
               rows={3}
-              disabled={creating}
+              disabled={createGroupMutation.isPending}
             />
           </div>
 
@@ -131,16 +130,16 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
               type="button"
               onClick={handleClose}
               className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
-              disabled={creating}
+              disabled={createGroupMutation.isPending}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="flex-1 px-6 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={creating}
+              disabled={createGroupMutation.isPending}
             >
-              {creating ? 'Creating...' : 'Create Group'}
+              {createGroupMutation.isPending ? 'Creating...' : 'Create Group'}
             </button>
           </div>
         </form>

@@ -46,9 +46,18 @@ export default function MembersModal({
     setIsAdding(true);
 
     try {
-      const { data: responseData } = await axios.post(`/api/groups/${groupId}/members`, {
-        email: data.email.trim().toLowerCase(),
+      const response = await fetch(`/api/groups/${groupId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email.trim().toLowerCase() }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add member');
+      }
+
+      const responseData = await response.json();
 
       // Add the new member to the list
       setMembers([...members, responseData.member]);
@@ -59,8 +68,7 @@ export default function MembersModal({
       setAddError('');
     } catch (err: unknown) {
       console.error('Error adding member:', err);
-      const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
-      setAddError(errorMessage || 'Failed to add member');
+      setAddError(err instanceof Error ? err.message : 'Failed to add member');
     } finally {
       setIsAdding(false);
     }
@@ -77,13 +85,20 @@ export default function MembersModal({
     setDeletingMemberId(memberId);
 
     try {
-      await axios.delete(`/api/groups/${groupId}/members?member_id=${memberId}`);
+      const response = await fetch(`/api/groups/${groupId}/members?member_id=${memberId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to remove member');
+      }
 
       // Remove the member from the list
       setMembers(members.filter(m => m.id !== memberId));
     } catch (err: unknown) {
       console.error('Error removing member:', err);
-      const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+      const errorMessage = err instanceof Error ? err.message : undefined;
       alert(errorMessage || 'Failed to remove member');
     } finally {
       setDeletingMemberId(null);
