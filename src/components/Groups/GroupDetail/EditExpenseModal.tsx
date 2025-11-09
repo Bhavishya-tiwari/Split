@@ -44,12 +44,14 @@ export default function EditExpenseModal({
   onExpenseDeleted
 }: EditExpenseModalProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [splitType, setSplitType] = useState<SplitType>(DEFAULT_SPLIT_TYPE);
   const [selectedSplitMembers, setSelectedSplitMembers] = useState<Set<string>>(new Set());
   const [exactAmounts, setExactAmounts] = useState<Record<string, string>>({});
+  
+  // REACT QUERY: Use mutation hooks
+  const updateExpense = useUpdateExpense(groupId);
+  const deleteExpense = useDeleteExpense(groupId);
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<ExpenseFormData>();
 
@@ -90,7 +92,6 @@ export default function EditExpenseModal({
 
   const handleClose = () => {
     setIsEditing(false);
-    setIsDeleting(false);
     setSubmitError('');
     setSplitType(DEFAULT_SPLIT_TYPE);
     setSelectedSplitMembers(new Set());
@@ -106,7 +107,6 @@ export default function EditExpenseModal({
       return;
     }
 
-    setIsDeleting(true);
     setSubmitError('');
 
     try {
@@ -126,8 +126,6 @@ export default function EditExpenseModal({
     } catch (err: unknown) {
       console.error('Error deleting expense:', err);
       setSubmitError(err instanceof Error ? err.message : 'Failed to delete expense');
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -154,9 +152,8 @@ export default function EditExpenseModal({
 
   const onSubmit = async (data: ExpenseFormData) => {
     setSubmitError('');
-    setIsSubmitting(true);
 
-    try {
+    try{
       const totalAmount = parseFloat(data.amount);
       const memberIds = Array.from(selectedSplitMembers);
 
@@ -224,8 +221,6 @@ export default function EditExpenseModal({
     } catch (err: unknown) {
       console.error('Error updating expense:', err);
       setSubmitError(err instanceof Error ? err.message : 'Failed to update expense');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -272,7 +267,7 @@ export default function EditExpenseModal({
                 register={register}
                 errors={errors}
                 members={members}
-                isDisabled={!isEditing || isSubmitting}
+                isDisabled={!isEditing || updateExpense.isPending}
                 watchedAmount={amount}
                 watchedCurrency={currency}
               />
@@ -286,7 +281,7 @@ export default function EditExpenseModal({
                 onUpdateExactAmount={updateExactAmount}
                 totalAmount={totalPaid}
                 currency={currency}
-                isDisabled={!isEditing || isSubmitting}
+                isDisabled={!isEditing || updateExpense.isPending}
                 paidBy={paidBy}
               />
 
@@ -304,7 +299,7 @@ export default function EditExpenseModal({
                   value={splitType}
                   onChange={(e) => setSplitType(e.target.value as SplitType)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:text-gray-700"
-                  disabled={!isEditing || isSubmitting}
+                  disabled={!isEditing || updateExpense.isPending}
                 >
                   {Object.entries(SPLIT_TYPE_CONFIG).map(([type, config]) => (
                     <option key={type} value={type}>{config.label}</option>
@@ -341,7 +336,7 @@ export default function EditExpenseModal({
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting || selectedSplitMembers.size === 0 || (selectedSplitMembers.size === 1 && Array.from(selectedSplitMembers)[0] === paidBy)}
+                    disabled={updateExpense.isPending || selectedSplitMembers.size === 0 || (selectedSplitMembers.size === 1 && Array.from(selectedSplitMembers)[0] === paidBy)}
                     className="flex-1 px-4 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updateExpense.isPending ? 'Updating...' : 'Update Expense'}

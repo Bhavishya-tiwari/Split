@@ -8,12 +8,11 @@ import MembersModal from './MembersModal';
 interface MembersCardProps {
   members: GroupMember[];
   isAdmin: boolean;
-  setMembers: React.Dispatch<React.SetStateAction<GroupMember[]>>;
   groupId: string;
   currentUserId: string | null;
 }
 
-export default function MembersCard({ members, isAdmin, setMembers, groupId, currentUserId }: MembersCardProps) {
+export default function MembersCard({ members, isAdmin, groupId, currentUserId }: MembersCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -37,7 +36,6 @@ export default function MembersCard({ members, isAdmin, setMembers, groupId, cur
         onClose={() => setIsModalOpen(false)}
         members={members}
         isAdmin={isAdmin}
-        setMembers={setMembers}
         groupId={groupId}
         currentUserId={currentUserId}
       />
