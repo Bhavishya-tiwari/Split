@@ -13,6 +13,7 @@ Creates the `groups` table structure.
   - `id`: UUID (auto-generated) - Primary key
   - `name`: Name of the group (required)
   - `description`: Optional description of the group
+  - `icon`: Icon identifier from lucide-react library (default: 'Users')
   - `created_by`: UUID (foreign key to `profiles.id`) - User who created the group
   - `created_at`: Timestamp when group was created
   - `updated_at`: Timestamp when group was last updated

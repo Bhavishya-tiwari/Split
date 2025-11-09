@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
           id,
           name,
           description,
+          icon,
           created_by,
           created_at,
           updated_at
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
-    const { name, description } = body
+    const { name, description, icon } = body
 
     if (!name || name.trim() === '') {
       return NextResponse.json(
@@ -131,6 +132,7 @@ export async function POST(request: NextRequest) {
       .insert({
         name: name.trim(),
         description: description?.trim() || null,
+        icon: icon || 'Users',
         created_by: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -192,7 +194,7 @@ export async function PUT(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
-    const { id, name, description } = body
+    const { id, name, description, icon } = body
 
     if (!id) {
       return NextResponse.json(
@@ -239,6 +241,7 @@ export async function PUT(request: NextRequest) {
       .update({
         name: name.trim(),
         description: description?.trim() || null,
+        icon: icon || 'Users',
         updated_at: new Date().toISOString()
       })
       .eq('id', id)

@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Users } from 'lucide-react';
 import { Group } from './types';
+import { getGroupIcon } from './IconPicker';
 
 interface GroupCardProps {
   group: Group;
@@ -10,6 +10,7 @@ interface GroupCardProps {
 
 export default function GroupCard({ group }: GroupCardProps) {
   const router = useRouter();
+  const IconComponent = getGroupIcon(group.icon);
 
   const handleClick = () => {
     router.push(`/groups/${group.id}`);
@@ -22,7 +23,7 @@ export default function GroupCard({ group }: GroupCardProps) {
     >
       <div className="flex items-start justify-between mb-4">
         <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-          <Users className="w-6 h-6 text-emerald-600" />
+          <IconComponent className="w-6 h-6 text-emerald-600" />
         </div>
       </div>
       <h3 className="text-xl font-semibold text-gray-900 mb-2">{group.name}</h3>
