@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Pencil, Trash2 } from 'lucide-react';
 import { GroupMember } from './types';
-import axios from 'axios';
+import { useUpdateExpense, useDeleteExpense, type Expense } from '@/hooks/useExpenses';
 import {
   Currency,
   SplitType,
@@ -22,17 +22,9 @@ interface EditExpenseModalProps {
   members: GroupMember[];
   groupId: string;
   currentUserId: string | null;
-  expense: ExpenseToEdit | null;
+  expense: Expense | null;
   onExpenseUpdated?: () => void;
   onExpenseDeleted?: () => void;
-}
-
-interface ExpenseToEdit {
-  id: string;
-  title: string;
-  currency: string;
-  expense_payers: Array<{ paid_by: string; amount: number; }>;
-  expense_splits: Array<{ user_id: string; amount: number; split_type: string; }>;
 }
 
 interface ExpenseFormData {
@@ -118,7 +110,14 @@ export default function EditExpenseModal({
     setSubmitError('');
 
     try {
-      await axios.delete(`/api/groups/${groupId}/expenses?expense_id=${expense.id}`);
+      const response = await fetch(`/api/groups/${groupId}/expenses?expense_id=${expense.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete expense');
+      }
       
       if (onExpenseDeleted) {
         onExpenseDeleted();
@@ -126,11 +125,7 @@ export default function EditExpenseModal({
       handleClose();
     } catch (err: unknown) {
       console.error('Error deleting expense:', err);
-      if (axios.isAxiosError(err)) {
-        setSubmitError(err.response?.data?.error || 'Failed to delete expense');
-      } else {
-        setSubmitError('Failed to delete expense');
-      }
+      setSubmitError(err instanceof Error ? err.message : 'Failed to delete expense');
     } finally {
       setIsDeleting(false);
     }
@@ -213,21 +208,22 @@ export default function EditExpenseModal({
         splits
       };
 
-      const response = await axios.put(`/api/groups/${groupId}/expenses`, expenseData);
+      const response = await fetch(`/api/groups/${groupId}/expenses`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expenseData),
+      });
       
-      if (response.status === 200) {
-        if (onExpenseUpdated) onExpenseUpdated();
-        handleClose();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update expense');
       }
+      
+      if (onExpenseUpdated) onExpenseUpdated();
+      handleClose();
     } catch (err: unknown) {
       console.error('Error updating expense:', err);
-      if (err instanceof Error) {
-        setSubmitError(err.message);
-      } else if (axios.isAxiosError(err)) {
-        setSubmitError(err.response?.data?.error || 'Failed to update expense');
-      } else {
-        setSubmitError('Failed to update expense');
-      }
+      setSubmitError(err instanceof Error ? err.message : 'Failed to update expense');
     } finally {
       setIsSubmitting(false);
     }
@@ -250,13 +246,13 @@ export default function EditExpenseModal({
                     onClick={() => setIsEditing(true)}
                     className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                     title="Edit expense"
-                    disabled={isDeleting}
+                    disabled={deleteExpense.isPending}
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
                   <button
                     onClick={handleDelete}
-                    disabled={isDeleting}
+                    disabled={deleteExpense.isPending}
                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                     title="Delete expense"
                   >
@@ -339,7 +335,7 @@ export default function EditExpenseModal({
                     type="button"
                     onClick={handleClose}
                     className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all"
-                    disabled={isSubmitting}
+                    disabled={updateExpense.isPending}
                   >
                     Cancel
                   </button>
@@ -348,7 +344,7 @@ export default function EditExpenseModal({
                     disabled={isSubmitting || selectedSplitMembers.size === 0 || (selectedSplitMembers.size === 1 && Array.from(selectedSplitMembers)[0] === paidBy)}
                     className="flex-1 px-4 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? 'Updating...' : 'Update Expense'}
+                    {updateExpense.isPending ? 'Updating...' : 'Update Expense'}
                   </button>
                 </div>
               )}
