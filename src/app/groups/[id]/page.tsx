@@ -128,7 +128,7 @@ export default function GroupDetailPage() {
               <line x1="9" y1="9" x2="15" y2="15"></line>
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">{error || 'Group not found'}</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">{error?.message || 'Group not found'}</h3>
           <p className="text-gray-600 mb-6">The group you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.</p>
           <button
             onClick={() => router.push('/groups')}
@@ -155,7 +155,6 @@ export default function GroupDetailPage() {
         <MembersCard
           members={members}
           isAdmin={userRole === 'admin'}
-          setMembers={setMembers}
           groupId={groupId}
           currentUserId={currentUserId}
         />

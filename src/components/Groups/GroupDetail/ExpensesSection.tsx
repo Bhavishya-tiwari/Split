@@ -142,7 +142,7 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-blue-600" />
                           <span className="text-sm font-medium text-blue-900">
-                            Paid by: {payer.payer_profile.full_name || payer.payer_profile.email}
+                            Paid by: {payer.payer_profile?.full_name || payer.payer_profile?.email || 'Unknown'}
                           </span>
                           <span className="text-sm text-blue-700 ml-auto">
                             {getCurrencySymbol(expense.currency as Currency)} {payer.amount.toFixed(2)}
@@ -164,7 +164,7 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                               className="flex items-center justify-between p-2 bg-gray-50 rounded"
                             >
                               <span className="text-sm text-gray-700">
-                                {split.split_user_profile.full_name || split.split_user_profile.email}
+                                {split.split_user_profile?.full_name || split.split_user_profile?.email || 'Unknown'}
                               </span>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-gray-500 px-2 py-1 bg-white rounded border border-gray-200">
@@ -185,7 +185,7 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                       <p className="text-xs text-gray-500">
                         Created by{' '}
                         <span className="font-medium">
-                          {expense.created_by_profile.full_name || expense.created_by_profile.email}
+                          {expense.created_by_profile?.full_name || expense.created_by_profile?.email || 'Unknown'}
                         </span>
                         {expense.updated_at !== expense.created_at && (
                           <span className="ml-2">

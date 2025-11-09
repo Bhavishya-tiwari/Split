@@ -96,7 +96,6 @@ export default function AddExpenseModal({
 
   const onSubmit = async (data: ExpenseFormData) => {
     setSubmitError('');
-    setIsSubmitting(true);
 
     try {
       const totalAmount = parseFloat(data.amount);
@@ -165,8 +164,6 @@ export default function AddExpenseModal({
     } catch (err: unknown) {
       console.error('Error creating expense:', err);
       setSubmitError(err instanceof Error ? err.message : 'Failed to create expense');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

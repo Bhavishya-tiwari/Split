@@ -128,11 +128,15 @@ export async function GET(
     const profileMap = new Map();
     membersResult.data?.forEach(member => {
       if (member.profiles) {
-        profileMap.set(member.profiles.id, {
-          id: member.profiles.id,
-          full_name: member.profiles.display_name,
-          email: member.profiles.email
-        });
+        // Handle profiles as either object or array (Supabase typing quirk)
+        const profile = Array.isArray(member.profiles) ? member.profiles[0] : member.profiles;
+        if (profile) {
+          profileMap.set(profile.id, {
+            id: profile.id,
+            full_name: profile.display_name,
+            email: profile.email
+          });
+        }
       }
     });
 
