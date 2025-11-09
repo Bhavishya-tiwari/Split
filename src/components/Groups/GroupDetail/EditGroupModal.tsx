@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Edit2 } from 'lucide-react';
+import IconPicker from '../IconPicker';
 
 interface EditGroupModalProps {
   isOpen: boolean;
@@ -10,15 +11,17 @@ interface EditGroupModalProps {
   formData: {
     name: string;
     description: string;
+    icon: string;
   };
   error: string;
   onClose: () => void;
-  onSubmit: (data: { name: string; description: string }) => Promise<void>;
+  onSubmit: (data: { name: string; description: string; icon: string }) => Promise<void>;
 }
 
 interface FormData {
   name: string;
   description: string;
+  icon: string;
 }
 
 export default function EditGroupModal({
@@ -29,6 +32,8 @@ export default function EditGroupModal({
   onClose,
   onSubmit
 }: EditGroupModalProps) {
+  const [selectedIcon, setSelectedIcon] = useState(formData.icon || 'Users');
+  
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: formData
   });
@@ -36,10 +41,14 @@ export default function EditGroupModal({
   // Update form values when formData changes
   useEffect(() => {
     reset(formData);
+    setSelectedIcon(formData.icon || 'Users');
   }, [formData, reset]);
 
   const handleFormSubmit = async (data: FormData) => {
-    await onSubmit(data);
+    await onSubmit({
+      ...data,
+      icon: selectedIcon
+    });
   };
 
   if (!isOpen) return null;
@@ -94,7 +103,7 @@ export default function EditGroupModal({
             )}
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
             <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
               Description (optional)
             </label>
@@ -105,6 +114,13 @@ export default function EditGroupModal({
               placeholder="What&apos;s this group for?"
               rows={3}
               disabled={isUpdating}
+            />
+          </div>
+
+          <div className="mb-6">
+            <IconPicker
+              selectedIcon={selectedIcon}
+              onIconSelect={setSelectedIcon}
             />
           </div>
 
