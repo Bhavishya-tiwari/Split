@@ -323,7 +323,60 @@ export async function DELETE(
       }
     }
 
-    // 5. Delete the member from the group
+    // 5. Check if the user has any expense involvement in this group
+    // Check as payer in expense_payers
+    const { data: payerExpenses, error: payerCheckError } = await serviceSupabase
+      .from('expense_payers')
+      .select('id, expenses!inner(group_id)')
+      .eq('paid_by', membershipToRemove.user_id)
+      .eq('expenses.group_id', groupId)
+      .limit(1);
+
+    if (payerCheckError) {
+      console.error('Error checking payer expenses:', payerCheckError);
+      return NextResponse.json(
+        { error: 'Failed to verify expense involvement' },
+        { status: 500 }
+      );
+    }
+
+    if (payerExpenses && payerExpenses.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Cannot remove member who has paid for expenses in this group. Please delete or reassign their expenses first.',
+          hasExpenses: true
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check as split participant in expense_splits
+    const { data: splitExpenses, error: splitCheckError } = await serviceSupabase
+      .from('expense_splits')
+      .select('id, expenses!inner(group_id)')
+      .eq('user_id', membershipToRemove.user_id)
+      .eq('expenses.group_id', groupId)
+      .limit(1);
+
+    if (splitCheckError) {
+      console.error('Error checking split expenses:', splitCheckError);
+      return NextResponse.json(
+        { error: 'Failed to verify expense involvement' },
+        { status: 500 }
+      );
+    }
+
+    if (splitExpenses && splitExpenses.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Cannot remove member who is part of expense splits in this group. Please delete or reassign their expenses first.',
+          hasExpenses: true
+        },
+        { status: 400 }
+      );
+    }
+
+    // 6. Delete the member from the group
     const { error: deleteError } = await serviceSupabase
       .from('user_group_mapping')
       .delete()
