@@ -313,6 +313,31 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    // Check if the group has any expenses
+    const { data: expenses, error: expensesCheckError } = await serviceSupabase
+      .from('expenses')
+      .select('id')
+      .eq('group_id', id)
+      .limit(1)
+
+    if (expensesCheckError) {
+      console.error('Error checking group expenses:', expensesCheckError)
+      return NextResponse.json(
+        { error: 'Failed to verify if group has expenses' },
+        { status: 500 }
+      )
+    }
+
+    if (expenses && expenses.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Cannot delete group that has expenses. Please delete all expenses first.',
+          hasExpenses: true
+        },
+        { status: 400 }
+      )
+    }
+
     // Delete the group (mappings will be cascade deleted)
     const { error: deleteError } = await serviceSupabase
       .from('groups')

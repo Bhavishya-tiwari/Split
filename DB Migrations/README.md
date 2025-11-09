@@ -80,6 +80,59 @@ Located in: `User Group Mapping table/`
 
 Documents the RLS approach (no actual policies are created).
 
+### 6. Expenses Table
+Located in: `Expenses table/`
+
+```bash
+# Run in Supabase SQL Editor:
+1. expenses-table-migration.sql
+2. expenses-rls-policies-migration.sql
+```
+
+Creates the `expenses` table for storing expense records. Expenses belong to groups and have cascade delete rules.
+
+### 7. Expense Payers Table
+Located in: `Expense Payers table/`
+
+```bash
+# Run in Supabase SQL Editor:
+1. expense-payers-migration.sql
+2. expense-payers-rls-policies-migration.sql
+```
+
+Creates the `expense_payers` table to track who paid for each expense and how much.
+
+### 8. Expense Splits Table
+Located in: `Expense Splits table/`
+
+```bash
+# Run in Supabase SQL Editor:
+1. expense-splits-migration.sql
+2. expense-splits-rls-policies-migration.sql
+```
+
+Creates the `expense_splits` table to track how expenses are split among users.
+
+### 9. Automatic Updated_At Triggers
+Located in: `Triggers/`
+
+```bash
+# Run in Supabase SQL Editor:
+1. automatic-updated-at-trigger.sql
+```
+
+Sets up automatic `updated_at` timestamp updates for all tables whenever a row is modified. See `Triggers/README.md` for detailed documentation on all triggers.
+
+### 10. Database Functions (Optional but Recommended)
+Located in: `Functions/`
+
+```bash
+# Run in Supabase SQL Editor:
+1. upsert-expense-function.sql
+```
+
+Creates reusable PostgreSQL functions for complex operations. The `upsert_expense_from_json` function handles creating/updating expenses with payers and splits in a single atomic transaction. See `Functions/README.md` for detailed documentation and usage examples.
+
 ## 🧹 Cleanup (If Upgrading)
 
 If you previously had read policies on these tables, run:
@@ -104,7 +157,15 @@ This will:
 ```
 DB Migrations/
 ├── README.md (this file)
+├── SCHEMA_DIAGRAM.md
 ├── cleanup-old-rls-policies.sql
+├── Triggers/
+│   ├── README.md
+│   ├── profile-creation-trigger.sql
+│   └── automatic-updated-at-trigger.sql
+├── Functions/
+│   ├── README.md
+│   └── upsert-expense-function.sql
 ├── Users table/
 │   ├── README.md
 │   └── supabase-profiles-migration.sql
@@ -112,10 +173,22 @@ DB Migrations/
 │   ├── README.md
 │   ├── groups-table-migration.sql
 │   └── groups-rls-policies-migration.sql
-└── User Group Mapping table/
+├── User Group Mapping table/
+│   ├── README.md
+│   ├── user-group-mapping-migration.sql
+│   └── user-group-mapping-RLS.sql
+├── Expenses table/
+│   ├── README.md
+│   ├── expenses-table-migration.sql
+│   └── expenses-rls-policies-migration.sql
+├── Expense Payers table/
+│   ├── README.md
+│   ├── expense-payers-migration.sql
+│   └── expense-payers-rls-policies-migration.sql
+└── Expense Splits table/
     ├── README.md
-    ├── user-group-mapping-migration.sql
-    └── user-group-mapping-RLS.sql
+    ├── expense-splits-migration.sql
+    └── expense-splits-rls-policies-migration.sql
 ```
 
 ## 🔑 Environment Setup
@@ -168,6 +241,13 @@ export const createServiceRoleClient = () => {
 - `PUT /api/groups/members` - Update member role (admin only)
 - `DELETE /api/groups/members?group_id={id}&user_id={id}` - Remove member (admin only)
 
+### Expenses API (`/api/expenses`)
+- `GET /api/expenses?group_id={id}` - Fetch all expenses for a group
+- `GET /api/expenses?id={id}` - Fetch single expense with payers and splits
+- `POST /api/expenses` - Create a new expense with payers and splits (uses `upsert_expense_from_json` function)
+- `PUT /api/expenses` - Update expense details (uses `upsert_expense_from_json` function)
+- `DELETE /api/expenses?id={id}` - Delete an expense (cascades to payers and splits)
+
 ## 📚 Additional Resources
 
 - [Supabase RLS Documentation](https://supabase.com/docs/guides/auth/row-level-security)
@@ -214,5 +294,36 @@ If you're migrating from an approach where the frontend directly queries Supabas
 
 ---
 
-**Last Updated:** November 2, 2025
+## 🗃️ Database Schema Overview
+
+### Tables and Relationships
+
+```
+profiles (users)
+    ↓ (created_by)
+    ├── groups
+    │   └── expenses
+    │       ├── expense_payers
+    │       └── expense_splits
+    └── user_group_mapping
+```
+
+### Cascade Delete Rules
+
+#### When a user is deleted:
+- ✅ All groups created by that user are deleted
+- ✅ All expenses created by that user are deleted
+- ✅ All payments made by that user are deleted
+- ✅ All expense splits for that user are deleted
+- ✅ All group memberships for that user are deleted
+
+#### When a group is deleted:
+- ✅ All expenses in that group are deleted
+- ✅ All group memberships are deleted
+
+#### When an expense is deleted:
+- ✅ All payment records (expense_payers) are deleted
+- ✅ All split records (expense_splits) are deleted
+
+**Last Updated:** November 9, 2025
 

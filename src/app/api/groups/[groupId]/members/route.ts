@@ -3,7 +3,10 @@ import { createClientForServer } from '@/utils/supabase/server';
 import { createServiceRoleClient } from '@/utils/supabase/service';
 
 // GET - Fetch all members of a group
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ groupId: string }> }
+) {
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
@@ -16,9 +19,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get group ID from query params
-    const { searchParams } = new URL(request.url);
-    const groupId = searchParams.get('group_id');
+    // Get group ID from dynamic route params
+    const { groupId } = await params;
 
     if (!groupId) {
       return NextResponse.json(
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest) {
       userRole: userMembership.role
     }, { status: 200 });
   } catch (error) {
-    console.error('Error in GET /api/groups/members:', error);
+    console.error('Error in GET /api/groups/[groupId]/members:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -73,7 +75,10 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Add a new member to a group
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ groupId: string }> }
+) {
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
@@ -86,13 +91,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get group ID from dynamic route params
+    const { groupId } = await params;
+
+    if (!groupId) {
+      return NextResponse.json(
+        { error: 'Group ID is required' },
+        { status: 400 }
+      );
+    }
+
     // Parse request body
     const body = await request.json();
-    const { group_id, email } = body;
+    const { email } = body;
 
-    if (!group_id || !email) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'Group ID and email are required' },
+        { error: 'Email is required' },
         { status: 400 }
       );
     }
@@ -114,7 +129,7 @@ export async function POST(request: NextRequest) {
       .from('user_group_mapping')
       .select('role')
       .eq('user_id', user.id)
-      .eq('group_id', group_id)
+      .eq('group_id', groupId)
       .single();
 
     if (requestingUserError || !requestingUserMembership) {
@@ -150,7 +165,7 @@ export async function POST(request: NextRequest) {
       .from('user_group_mapping')
       .select('id')
       .eq('user_id', profileData.id)
-      .eq('group_id', group_id)
+      .eq('group_id', groupId)
       .maybeSingle();
 
     if (existingMembership) {
@@ -165,7 +180,7 @@ export async function POST(request: NextRequest) {
       .from('user_group_mapping')
       .insert({
         user_id: profileData.id,
-        group_id: group_id,
+        group_id: groupId,
         role: 'member'
       })
       .select('id, role, joined_at, profiles(id, display_name:full_name, email)')
@@ -187,7 +202,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error in POST /api/groups/members:', error);
+    console.error('Error in POST /api/groups/[groupId]/members:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -196,7 +211,10 @@ export async function POST(request: NextRequest) {
 }
 
 // DELETE - Remove a member from a group
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ groupId: string }> }
+) {
   try {
     // Authenticate the user using server client
     const supabase = await createClientForServer();
@@ -209,14 +227,23 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get parameters from query params
+    // Get group ID from dynamic route params
+    const { groupId } = await params;
+
+    if (!groupId) {
+      return NextResponse.json(
+        { error: 'Group ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get member ID from query params
     const { searchParams } = new URL(request.url);
-    const groupId = searchParams.get('group_id');
     const memberIdToRemove = searchParams.get('member_id');
 
-    if (!groupId || !memberIdToRemove) {
+    if (!memberIdToRemove) {
       return NextResponse.json(
-        { error: 'Group ID and member ID are required' },
+        { error: 'Member ID is required' },
         { status: 400 }
       );
     }
@@ -296,7 +323,60 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // 5. Delete the member from the group
+    // 5. Check if the user has any expense involvement in this group
+    // Check as payer in expense_payers
+    const { data: payerExpenses, error: payerCheckError } = await serviceSupabase
+      .from('expense_payers')
+      .select('id, expenses!inner(group_id)')
+      .eq('paid_by', membershipToRemove.user_id)
+      .eq('expenses.group_id', groupId)
+      .limit(1);
+
+    if (payerCheckError) {
+      console.error('Error checking payer expenses:', payerCheckError);
+      return NextResponse.json(
+        { error: 'Failed to verify expense involvement' },
+        { status: 500 }
+      );
+    }
+
+    if (payerExpenses && payerExpenses.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Cannot remove member who has paid for expenses in this group. Please delete or reassign their expenses first.',
+          hasExpenses: true
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check as split participant in expense_splits
+    const { data: splitExpenses, error: splitCheckError } = await serviceSupabase
+      .from('expense_splits')
+      .select('id, expenses!inner(group_id)')
+      .eq('user_id', membershipToRemove.user_id)
+      .eq('expenses.group_id', groupId)
+      .limit(1);
+
+    if (splitCheckError) {
+      console.error('Error checking split expenses:', splitCheckError);
+      return NextResponse.json(
+        { error: 'Failed to verify expense involvement' },
+        { status: 500 }
+      );
+    }
+
+    if (splitExpenses && splitExpenses.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Cannot remove member who is part of expense splits in this group. Please delete or reassign their expenses first.',
+          hasExpenses: true
+        },
+        { status: 400 }
+      );
+    }
+
+    // 6. Delete the member from the group
     const { error: deleteError } = await serviceSupabase
       .from('user_group_mapping')
       .delete()
@@ -316,10 +396,11 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error in DELETE /api/groups/members:', error);
+    console.error('Error in DELETE /api/groups/[groupId]/members:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
+
