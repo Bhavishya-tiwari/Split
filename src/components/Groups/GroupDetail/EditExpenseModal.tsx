@@ -175,12 +175,22 @@ export default function EditExpenseModal({
 
       let splits;
       if (splitType === SplitType.EQUAL) {
-        const splitAmount = totalAmount / memberIds.length;
-        splits = memberIds.map(userId => ({
-          user_id: userId,
-          amount: parseFloat(splitAmount.toFixed(2)),
-          split_type: SplitType.EQUAL,
-        }));
+        const baseAmount = Math.floor((totalAmount / memberIds.length) * 100) / 100; // Round down to 2 decimals
+        const totalBase = baseAmount * memberIds.length;
+        const remainder = Math.round((totalAmount - totalBase) * 100) / 100; // Calculate remainder
+        
+        splits = memberIds.map((userId, index) => {
+          // Add remainder to the last split to ensure exact total
+          const amount = index === memberIds.length - 1 
+            ? parseFloat((baseAmount + remainder).toFixed(2))
+            : parseFloat(baseAmount.toFixed(2));
+          
+          return {
+            user_id: userId,
+            amount: amount,
+            split_type: SplitType.EQUAL,
+          };
+        });
       } else {
         const totalExact = getTotalExactAmounts();
         if (Math.abs(totalExact - totalAmount) > 0.01) {
