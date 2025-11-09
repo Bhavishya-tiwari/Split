@@ -1,61 +1,49 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientForBrowser } from '@/utils/supabase/client';
+import { useGroups } from '@/hooks/useGroups';
 import {
   CreateGroupModal,
   GroupsList,
   EmptyGroupsState,
   LoadingState,
   GroupsHeader,
-  type Group,
 } from '@/components/Groups';
 
 export default function GroupsPage() {
-  const [loading, setLoading] = useState(true);
-  const [groups, setGroups] = useState<Group[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const router = useRouter();
+  
+  // REACT QUERY: Automatic caching, loading states, and refetching
+  const { data: groups = [], isLoading, error } = useGroups();
 
-  const fetchGroups = useCallback(async () => {
-    try {
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
       const supabase = createClientForBrowser();
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         router.push('/');
-        return;
       }
-
-      // Fetch groups through API route
-      const response = await fetch('/api/groups', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        console.error('Error fetching groups:', response.statusText);
-        return;
-      }
-
-      const { groups: fetchedGroups } = await response.json();
-      setGroups(fetchedGroups || []);
-    } catch (err) {
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
-    }
+    };
+    checkAuth();
   }, [router]);
 
-  useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
-
-  if (loading) {
+  if (isLoading) {
     return <LoadingState />;
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">Failed to load groups. Please try again.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -71,7 +59,7 @@ export default function GroupsPage() {
       <CreateGroupModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSuccess={fetchGroups}
+        onSuccess={() => setShowCreateModal(false)}
       />
     </div>
   );

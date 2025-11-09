@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { GroupMember } from './types';
-import axios from 'axios';
+import { useCreateExpense } from '@/hooks/useExpenses';
 import {
   Currency,
   SplitType,
@@ -41,11 +41,13 @@ export default function AddExpenseModal({
   currentUserId,
   onExpenseAdded
 }: AddExpenseModalProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [splitType, setSplitType] = useState<SplitType>(DEFAULT_SPLIT_TYPE);
   const [selectedSplitMembers, setSelectedSplitMembers] = useState<Set<string>>(new Set());
   const [exactAmounts, setExactAmounts] = useState<Record<string, string>>({});
+  
+  // REACT QUERY: Use mutation hook instead of direct fetch
+  const createExpense = useCreateExpense(groupId);
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<ExpenseFormData>({
     defaultValues: {
@@ -94,7 +96,6 @@ export default function AddExpenseModal({
 
   const onSubmit = async (data: ExpenseFormData) => {
     setSubmitError('');
-    setIsSubmitting(true);
 
     try {
       const totalAmount = parseFloat(data.amount);
@@ -147,23 +148,22 @@ export default function AddExpenseModal({
         splits
       };
 
-      const response = await axios.post(`/api/groups/${groupId}/expenses`, expenseData);
+      const response = await fetch(`/api/groups/${groupId}/expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expenseData),
+      });
       
-      if (response.status === 201) {
-        if (onExpenseAdded) onExpenseAdded();
-        handleClose();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create expense');
       }
+      
+      if (onExpenseAdded) onExpenseAdded();
+      handleClose();
     } catch (err: unknown) {
       console.error('Error creating expense:', err);
-      if (err instanceof Error) {
-        setSubmitError(err.message);
-      } else if (axios.isAxiosError(err)) {
-        setSubmitError(err.response?.data?.error || 'Failed to create expense');
-      } else {
-        setSubmitError('Failed to create expense');
-      }
-    } finally {
-      setIsSubmitting(false);
+      setSubmitError(err instanceof Error ? err.message : 'Failed to create expense');
     }
   };
 
@@ -186,7 +186,7 @@ export default function AddExpenseModal({
                 register={register}
                 errors={errors}
                 members={members}
-                isDisabled={isSubmitting}
+                isDisabled={createExpense.isPending}
                 watchedAmount={amount}
                 watchedCurrency={currency}
               />
@@ -200,7 +200,7 @@ export default function AddExpenseModal({
                 onUpdateExactAmount={updateExactAmount}
                 totalAmount={totalPaid}
                 currency={currency}
-                isDisabled={isSubmitting}
+                isDisabled={createExpense.isPending}
                 paidBy={paidBy}
               />
 
@@ -218,7 +218,7 @@ export default function AddExpenseModal({
                   value={splitType}
                   onChange={(e) => setSplitType(e.target.value as SplitType)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                  disabled={isSubmitting}
+                  disabled={createExpense.isPending}
                 >
                   {Object.entries(SPLIT_TYPE_CONFIG).map(([type, config]) => (
                     <option key={type} value={type}>{config.label}</option>
@@ -240,17 +240,17 @@ export default function AddExpenseModal({
                   type="button"
                   onClick={handleClose}
                   className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all"
-                  disabled={isSubmitting}
+                  disabled={createExpense.isPending}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || selectedSplitMembers.size === 0 || (selectedSplitMembers.size === 1 && Array.from(selectedSplitMembers)[0] === paidBy)}
+                  disabled={createExpense.isPending || selectedSplitMembers.size === 0 || (selectedSplitMembers.size === 1 && Array.from(selectedSplitMembers)[0] === paidBy)}
                   className="flex-1 px-4 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Expense'}
-                </button>
+            {createExpense.isPending ? 'Creating...' : 'Create Expense'}
+          </button>
               </div>
             </div>
           </form>

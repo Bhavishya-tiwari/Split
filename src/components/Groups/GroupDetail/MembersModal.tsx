@@ -3,14 +3,13 @@ import { useForm } from 'react-hook-form';
 import { GroupMember } from './types';
 import MemberListItem from './MemberListItem';
 import { X, Plus } from 'lucide-react';
-import axios from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface MembersModalProps {
   isOpen: boolean;
   onClose: () => void;
   members: GroupMember[];
   isAdmin: boolean;
-  setMembers: React.Dispatch<React.SetStateAction<GroupMember[]>>;
   groupId: string;
   currentUserId: string | null;
 }
@@ -24,10 +23,11 @@ export default function MembersModal({
   onClose, 
   members, 
   isAdmin,
-  setMembers,
   groupId,
   currentUserId,
 }: MembersModalProps) {
+  // REACT QUERY: Use query client for cache invalidation
+  const queryClient = useQueryClient();
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState('');
@@ -46,12 +46,21 @@ export default function MembersModal({
     setIsAdding(true);
 
     try {
-      const { data: responseData } = await axios.post(`/api/groups/${groupId}/members`, {
-        email: data.email.trim().toLowerCase(),
+      const response = await fetch(`/api/groups/${groupId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email.trim().toLowerCase() }),
       });
 
-      // Add the new member to the list
-      setMembers([...members, responseData.member]);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add member');
+      }
+
+      await response.json();
+
+      // REACT QUERY: Invalidate cache to refetch members automatically
+      queryClient.invalidateQueries({ queryKey: ['group-summary', groupId] });
       
       // Close the add member modal and reset form
       setShowAddMemberModal(false);
@@ -59,8 +68,7 @@ export default function MembersModal({
       setAddError('');
     } catch (err: unknown) {
       console.error('Error adding member:', err);
-      const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
-      setAddError(errorMessage || 'Failed to add member');
+      setAddError(err instanceof Error ? err.message : 'Failed to add member');
     } finally {
       setIsAdding(false);
     }
@@ -77,13 +85,20 @@ export default function MembersModal({
     setDeletingMemberId(memberId);
 
     try {
-      await axios.delete(`/api/groups/${groupId}/members?member_id=${memberId}`);
+      const response = await fetch(`/api/groups/${groupId}/members?member_id=${memberId}`, {
+        method: 'DELETE',
+      });
 
-      // Remove the member from the list
-      setMembers(members.filter(m => m.id !== memberId));
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to remove member');
+      }
+
+      // REACT QUERY: Invalidate cache to refetch members automatically
+      queryClient.invalidateQueries({ queryKey: ['group-summary', groupId] });
     } catch (err: unknown) {
       console.error('Error removing member:', err);
-      const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+      const errorMessage = err instanceof Error ? err.message : undefined;
       alert(errorMessage || 'Failed to remove member');
     } finally {
       setDeletingMemberId(null);

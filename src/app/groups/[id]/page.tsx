@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClientForBrowser } from '@/utils/supabase/client';
-import axios from 'axios';
+import { useGroupSummary, useUpdateGroup, useDeleteGroup } from '@/hooks/useGroups';
 import {
   GroupHeader,
   ExpensesSection,
@@ -20,70 +20,38 @@ export default function GroupDetailPage() {
   const router = useRouter();
   const groupId = params.id as string;
 
-  const [loading, setLoading] = useState(true);
-  const [group, setGroup] = useState<Group | null>(null);
-  const [members, setMembers] = useState<GroupMember[]>([]);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFormData, setEditFormData] = useState({ name: '', description: '', icon: 'Users' });
   const [editError, setEditError] = useState('');
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
+  // REACT QUERY: Automatic caching, loading states, and refetching
+  const { data: summary, isLoading, error } = useGroupSummary(groupId);
+  const updateGroupMutation = useUpdateGroup();
+  const deleteGroupMutation = useDeleteGroup();
+
+  // Extract data from summary
+  const group = summary?.group || null;
+  const members = summary?.members || [];
+  const userRole = summary?.userRole || null;
+
+  // Check authentication
   useEffect(() => {
-    const fetchGroupDetails = async () => {
-      try {
-        const supabase = createClientForBrowser();
-        const { data: { user } } = await supabase.auth.getUser();
+    const checkAuth = async () => {
+      const supabase = createClientForBrowser();
+      const { data: { user } } = await supabase.auth.getUser();
 
-        if (!user) {
-          router.push('/');
-          return;
-        }
-
-        setCurrentUserId(user.id);
-
-        // Fetch group details through API route
-        const groupResponse = await fetch(`/api/groups?id=${groupId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!groupResponse.ok) {
-          console.error('Error fetching group:', groupResponse.statusText);
-          setError('Group not found');
-          setLoading(false);
-          return;
-        }
-
-        const { group: groupData, userRole: role } = await groupResponse.json();
-        setGroup(groupData);
-        setUserRole(role);
-
-        // Fetch group members using API route
-        const { data: membersResponse } = await axios.get(`/api/groups/${groupId}/members`);
-        
-        if (membersResponse.members) {
-          setMembers(membersResponse.members);
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error('Error:', err);
-        setError('Failed to load group');
-        setLoading(false);
+      if (!user) {
+        router.push('/');
+        return;
       }
-    };
 
-    if (groupId) {
-      fetchGroupDetails();
-    }
-  }, [groupId, router]);
+      setCurrentUserId(user.id);
+    };
+    
+    checkAuth();
+  }, [router]);
 
   const handleEditClick = () => {
     if (group) {
@@ -100,27 +68,23 @@ export default function GroupDetailPage() {
 
   const handleUpdateGroup = async (data: { name: string; description: string; icon: string }) => {
     setEditError('');
-    setIsUpdating(true);
 
     try {
-      const response = await axios.put('/api/groups', {
+      // REACT QUERY: Automatic cache invalidation
+      await updateGroupMutation.mutateAsync({
         id: groupId,
         name: data.name,
         description: data.description,
         icon: data.icon
       });
 
-      // Update local state with new group data
-      setGroup(response.data.group);
       setShowEditModal(false);
       setEditError('');
     } catch (err: unknown) {
       console.error('Error updating group:', err);
-      const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
-      setEditError(errorMessage || 'Failed to update group');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update group';
+      setEditError(errorMessage);
       throw err; // Re-throw to let form handle the error
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -129,22 +93,20 @@ export default function GroupDetailPage() {
       return;
     }
 
-    setIsDeleting(true);
-
     try {
-      await axios.delete(`/api/groups?id=${groupId}`);
-
+      // REACT QUERY: Automatic cache invalidation
+      await deleteGroupMutation.mutateAsync(groupId);
+      
       // Success - redirect to groups page
       router.push('/groups');
     } catch (err: unknown) {
       console.error('Error deleting group:', err);
-      const errorMessage = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
-      alert(errorMessage || 'Failed to delete group');
-      setIsDeleting(false);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete group';
+      alert(errorMessage);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -166,7 +128,7 @@ export default function GroupDetailPage() {
               <line x1="9" y1="9" x2="15" y2="15"></line>
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">{error || 'Group not found'}</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">{error?.message || 'Group not found'}</h3>
           <p className="text-gray-600 mb-6">The group you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.</p>
           <button
             onClick={() => router.push('/groups')}
@@ -193,7 +155,6 @@ export default function GroupDetailPage() {
         <MembersCard
           members={members}
           isAdmin={userRole === 'admin'}
-          setMembers={setMembers}
           groupId={groupId}
           currentUserId={currentUserId}
         />
@@ -209,7 +170,7 @@ export default function GroupDetailPage() {
 
       <SettingsModal
         isOpen={showSettingsModal}
-        isDeleting={isDeleting}
+        isDeleting={deleteGroupMutation.isPending}
         onClose={() => setShowSettingsModal(false)}
         onEdit={handleEditClick}
         onDelete={handleDeleteGroup}
@@ -217,7 +178,7 @@ export default function GroupDetailPage() {
 
       <EditGroupModal
         isOpen={showEditModal}
-        isUpdating={isUpdating}
+        isUpdating={updateGroupMutation.isPending}
         formData={editFormData}
         error={editError}
         onClose={() => setShowEditModal(false)}
