@@ -59,7 +59,7 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -95,7 +95,7 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
             </p>
           </div>
         )}
-        
+
         {/* Empty State */}
         {!isLoading && !error && expenses.length === 0 && (
           <div className="text-center py-12">
@@ -114,7 +114,7 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
               {expenses.map((expense) => {
                 const totalAmount = getTotalAmount(expense);
                 const payer = expense.expense_payers[0]; // Assuming single payer for now
-                
+
                 return (
                   <div
                     key={expense.id}
@@ -142,10 +142,14 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-blue-600" />
                           <span className="text-sm font-medium text-blue-900">
-                            Paid by: {payer.payer_profile?.full_name || payer.payer_profile?.email || 'Unknown'}
+                            Paid by:{' '}
+                            {payer.payer_profile?.full_name ||
+                              payer.payer_profile?.email ||
+                              'Unknown'}
                           </span>
                           <span className="text-sm text-blue-700 ml-auto">
-                            {getCurrencySymbol(expense.currency as Currency)} {payer.amount.toFixed(2)}
+                            {getCurrencySymbol(expense.currency as Currency)}{' '}
+                            {payer.amount.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -164,14 +168,17 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                               className="flex items-center justify-between p-2 bg-gray-50 rounded"
                             >
                               <span className="text-sm text-gray-700">
-                                {split.split_user_profile?.full_name || split.split_user_profile?.email || 'Unknown'}
+                                {split.split_user_profile?.full_name ||
+                                  split.split_user_profile?.email ||
+                                  'Unknown'}
                               </span>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-gray-500 px-2 py-1 bg-white rounded border border-gray-200">
                                   {split.split_type}
                                 </span>
                                 <span className="text-sm font-medium text-gray-900">
-                                  {getCurrencySymbol(expense.currency as Currency)} {split.amount.toFixed(2)}
+                                  {getCurrencySymbol(expense.currency as Currency)}{' '}
+                                  {split.amount.toFixed(2)}
                                 </span>
                               </div>
                             </div>
@@ -185,12 +192,12 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                       <p className="text-xs text-gray-500">
                         Created by{' '}
                         <span className="font-medium">
-                          {expense.created_by_profile?.full_name || expense.created_by_profile?.email || 'Unknown'}
+                          {expense.created_by_profile?.full_name ||
+                            expense.created_by_profile?.email ||
+                            'Unknown'}
                         </span>
                         {expense.updated_at !== expense.created_at && (
-                          <span className="ml-2">
-                            • Updated {formatDate(expense.updated_at)}
-                          </span>
+                          <span className="ml-2">• Updated {formatDate(expense.updated_at)}</span>
                         )}
                       </p>
                     </div>
@@ -203,11 +210,12 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
             {totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
                 <div className="text-sm text-gray-600">
-                  Showing {((currentPage - 1) * pageLimit) + 1} to {Math.min(currentPage * pageLimit, totalCount)} of {totalCount} expenses
+                  Showing {(currentPage - 1) * pageLimit + 1} to{' '}
+                  {Math.min(currentPage * pageLimit, totalCount)} of {totalCount} expenses
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
                     className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -217,7 +225,7 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
                     className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -255,4 +263,3 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
     </>
   );
 }
-

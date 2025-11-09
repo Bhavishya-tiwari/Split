@@ -30,12 +30,17 @@ export default function EditGroupModal({
   formData,
   error,
   onClose,
-  onSubmit
+  onSubmit,
 }: EditGroupModalProps) {
   const [selectedIcon, setSelectedIcon] = useState(formData.icon || 'Users');
-  
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
-    defaultValues: formData
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: formData,
   });
 
   // Update form values when formData changes
@@ -47,18 +52,18 @@ export default function EditGroupModal({
   const handleFormSubmit = async (data: FormData) => {
     await onSubmit({
       ...data,
-      icon: selectedIcon
+      icon: selectedIcon,
     });
   };
 
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
@@ -90,38 +95,36 @@ export default function EditGroupModal({
             <input
               type="text"
               id="edit-name"
-              {...register('name', { 
+              {...register('name', {
                 required: 'Group name is required',
-                validate: value => value.trim().length > 0 || 'Group name is required'
+                validate: (value) => value.trim().length > 0 || 'Group name is required',
               })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               placeholder="e.g., Weekend Trip"
               disabled={isUpdating}
             />
-            {errors.name && (
-              <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>}
           </div>
 
           <div className="mb-4">
-            <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="edit-description"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Description (optional)
             </label>
             <textarea
               id="edit-description"
               {...register('description')}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              placeholder="What&apos;s this group for?"
+              placeholder="What's this group for?"
               rows={3}
               disabled={isUpdating}
             />
           </div>
 
           <div className="mb-6">
-            <IconPicker
-              selectedIcon={selectedIcon}
-              onIconSelect={setSelectedIcon}
-            />
+            <IconPicker selectedIcon={selectedIcon} onIconSelect={setSelectedIcon} />
           </div>
 
           {error && (
@@ -152,4 +155,3 @@ export default function EditGroupModal({
     </div>
   );
 }
-

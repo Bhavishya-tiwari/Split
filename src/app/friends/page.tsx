@@ -12,13 +12,15 @@ export default function FriendsPage() {
   useEffect(() => {
     const checkUser = async () => {
       const supabase = createClientForBrowser();
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         router.push('/');
         return;
       }
-      
+
       setLoading(false);
     };
 
@@ -61,4 +63,3 @@ export default function FriendsPage() {
     </div>
   );
 }
-

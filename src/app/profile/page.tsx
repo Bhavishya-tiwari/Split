@@ -26,11 +26,16 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProfileFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ProfileFormData>({
     defaultValues: {
       full_name: '',
-      phone: ''
-    }
+      phone: '',
+    },
   });
 
   useEffect(() => {
@@ -40,8 +45,11 @@ export default function ProfilePage() {
   const loadUserProfile = async () => {
     try {
       const supabase = createClientForBrowser();
-      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user: currentUser },
+        error: userError,
+      } = await supabase.auth.getUser();
+
       if (userError) throw userError;
       if (!currentUser) throw new Error('No user found');
 
@@ -58,7 +66,7 @@ export default function ProfilePage() {
         setProfile(profileData);
         reset({
           full_name: profileData.full_name || '',
-          phone: profileData.phone || ''
+          phone: profileData.phone || '',
         });
       } else {
         // If no profile exists, create a basic one from user metadata
@@ -72,7 +80,7 @@ export default function ProfilePage() {
         setProfile(newProfile);
         reset({
           full_name: newProfile.full_name || '',
-          phone: newProfile.phone || ''
+          phone: newProfile.phone || '',
         });
       }
     } catch (error) {
@@ -124,7 +132,7 @@ export default function ProfilePage() {
     setEditing(false);
     reset({
       full_name: profile?.full_name || '',
-      phone: profile?.phone || ''
+      phone: profile?.phone || '',
     });
     setMessage(null);
   };
@@ -149,9 +157,7 @@ export default function ProfilePage() {
                 : profile?.email?.charAt(0).toUpperCase() || 'U'}
             </div>
             <div>
-              <h1 className="text-3xl font-bold mb-2">
-                {profile?.full_name || 'Your Profile'}
-              </h1>
+              <h1 className="text-3xl font-bold mb-2">{profile?.full_name || 'Your Profile'}</h1>
               <p className="text-emerald-50">{profile?.email}</p>
             </div>
           </div>
@@ -176,9 +182,7 @@ export default function ProfilePage() {
               <div className="space-y-6">
                 {/* Full Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                   <input
                     type="text"
                     {...register('full_name')}
@@ -208,12 +212,8 @@ export default function ProfilePage() {
 
                 {/* Email (Read-only) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
-                    {profile?.email}
-                  </p>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">{profile?.email}</p>
                 </div>
 
                 {/* Member Since */}
@@ -257,9 +257,7 @@ export default function ProfilePage() {
               <div className="space-y-6">
                 {/* Full Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                   <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
                     {profile?.full_name || 'Not set'}
                   </p>
@@ -277,12 +275,8 @@ export default function ProfilePage() {
 
                 {/* Email (Read-only) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">
-                    {profile?.email}
-                  </p>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">{profile?.email}</p>
                 </div>
 
                 {/* Member Since */}
@@ -319,4 +313,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

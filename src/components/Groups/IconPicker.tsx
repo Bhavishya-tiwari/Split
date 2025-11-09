@@ -27,7 +27,7 @@ export const AVAILABLE_GROUP_ICONS = [
   { name: 'Pizza', label: 'Food' },
 ] as const;
 
-export type GroupIconName = typeof AVAILABLE_GROUP_ICONS[number]['name'];
+export type GroupIconName = (typeof AVAILABLE_GROUP_ICONS)[number]['name'];
 
 interface IconPickerProps {
   selectedIcon: string;
@@ -35,7 +35,11 @@ interface IconPickerProps {
   className?: string;
 }
 
-export default function IconPicker({ selectedIcon, onIconSelect, className = '' }: IconPickerProps) {
+export default function IconPicker({
+  selectedIcon,
+  onIconSelect,
+  className = '',
+}: IconPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const getIconComponent = (iconName: string) => {
@@ -47,10 +51,8 @@ export default function IconPicker({ selectedIcon, onIconSelect, className = '' 
 
   return (
     <div className={`relative ${className}`}>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Group Icon
-      </label>
-      
+      <label className="block text-sm font-medium text-gray-700 mb-2">Group Icon</label>
+
       {/* Selected icon display */}
       <button
         type="button"
@@ -61,27 +63,26 @@ export default function IconPicker({ selectedIcon, onIconSelect, className = '' 
           <SelectedIcon className="w-5 h-5 text-emerald-600" />
         </div>
         <span className="text-gray-700 flex-1 text-left">
-          {AVAILABLE_GROUP_ICONS.find(i => i.name === selectedIcon)?.label || 'Select Icon'}
+          {AVAILABLE_GROUP_ICONS.find((i) => i.name === selectedIcon)?.label || 'Select Icon'}
         </span>
-        <LucideIcons.ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <LucideIcons.ChevronDown
+          className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {/* Icon picker dropdown */}
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-10" 
-            onClick={() => setIsOpen(false)}
-          />
-          
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+
           {/* Dropdown */}
           <div className="absolute z-20 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
             <div className="grid grid-cols-4 gap-2 p-3">
               {AVAILABLE_GROUP_ICONS.map((icon) => {
                 const IconComponent = getIconComponent(icon.name);
                 const isSelected = selectedIcon === icon.name;
-                
+
                 return (
                   <button
                     key={icon.name}
@@ -91,18 +92,18 @@ export default function IconPicker({ selectedIcon, onIconSelect, className = '' 
                       setIsOpen(false);
                     }}
                     className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all hover:bg-emerald-50 ${
-                      isSelected 
-                        ? 'bg-emerald-100 ring-2 ring-emerald-500' 
-                        : 'bg-gray-50'
+                      isSelected ? 'bg-emerald-100 ring-2 ring-emerald-500' : 'bg-gray-50'
                     }`}
                     title={icon.label}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      isSelected ? 'bg-emerald-200' : 'bg-white'
-                    }`}>
-                      <IconComponent className={`w-5 h-5 ${
-                        isSelected ? 'text-emerald-600' : 'text-gray-600'
-                      }`} />
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        isSelected ? 'bg-emerald-200' : 'bg-white'
+                      }`}
+                    >
+                      <IconComponent
+                        className={`w-5 h-5 ${isSelected ? 'text-emerald-600' : 'text-gray-600'}`}
+                      />
                     </div>
                     <span className="text-xs text-gray-600 text-center leading-tight">
                       {icon.label}
@@ -123,4 +124,3 @@ export function getGroupIcon(iconName: string) {
   const IconComponent = (LucideIcons as any)[iconName];
   return IconComponent || LucideIcons.Users;
 }
-

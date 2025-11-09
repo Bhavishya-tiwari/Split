@@ -1,6 +1,6 @@
 /**
  * React Query hooks for Expenses
- * 
+ *
  * Provides:
  * - Automatic caching with pagination
  * - Loading/error states
@@ -75,12 +75,12 @@ export function useExpenses(groupId: string, page: number = 1, limit: number = 5
     queryFn: async () => {
       const url = `/api/groups/${groupId}/expenses?page=${page}&limit=${limit}`;
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to fetch expenses');
       }
-      
+
       return response.json() as Promise<ExpensesResponse>;
     },
     staleTime: 30 * 1000, // 30 seconds
@@ -112,12 +112,12 @@ export function useCreateExpense(groupId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create expense');
       }
-      
+
       const result = await response.json();
       return result.expense as Expense;
     },
@@ -154,12 +154,12 @@ export function useUpdateExpense(groupId: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to update expense');
       }
-      
+
       const result = await response.json();
       return result.expense as Expense;
     },
@@ -183,7 +183,7 @@ export function useDeleteExpense(groupId: string) {
       const response = await fetch(`/api/groups/${groupId}/expenses?expense_id=${expenseId}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete expense');
@@ -197,4 +197,3 @@ export function useDeleteExpense(groupId: string) {
     },
   });
 }
-

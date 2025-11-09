@@ -26,7 +26,7 @@ export default function SplitMemberSelector({
   totalAmount,
   currency,
   isDisabled,
-  paidBy
+  paidBy,
 }: SplitMemberSelectorProps) {
   return (
     <div>
@@ -54,26 +54,27 @@ export default function SplitMemberSelector({
                 <p className="text-sm text-gray-500">{member.profiles.email}</p>
               </div>
             </label>
-            
+
             {/* Equal split amount display */}
-            {splitType === SplitType.EQUAL && selectedMembers.has(member.profiles.id) && totalAmount > 0 && (
-              <div className="px-3 pb-3 pt-0">
-                <div className="flex items-center justify-between p-2 bg-emerald-50 rounded">
-                  <span className="text-sm text-emerald-700">Owes:</span>
-                  <span className="text-sm font-bold text-emerald-900">
-                    {getCurrencySymbol(currency)} {(totalAmount / selectedMembers.size).toFixed(2)}
-                  </span>
+            {splitType === SplitType.EQUAL &&
+              selectedMembers.has(member.profiles.id) &&
+              totalAmount > 0 && (
+                <div className="px-3 pb-3 pt-0">
+                  <div className="flex items-center justify-between p-2 bg-emerald-50 rounded">
+                    <span className="text-sm text-emerald-700">Owes:</span>
+                    <span className="text-sm font-bold text-emerald-900">
+                      {getCurrencySymbol(currency)}{' '}
+                      {(totalAmount / selectedMembers.size).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Exact amount input */}
             {splitType === SplitType.EXACT && selectedMembers.has(member.profiles.id) && (
               <div className="px-3 pb-3 pt-0">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600 whitespace-nowrap">
-                    Amount:
-                  </label>
+                  <label className="text-sm text-gray-600 whitespace-nowrap">Amount:</label>
                   <input
                     type="number"
                     step="0.01"
@@ -97,7 +98,7 @@ export default function SplitMemberSelector({
       {selectedMembers.size === 0 && (
         <p className="text-red-600 text-sm">Please select at least one member</p>
       )}
-      
+
       {selectedMembers.size === 1 && Array.from(selectedMembers)[0] === paidBy && (
         <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
           <span className="text-amber-600 text-sm">⚠️</span>
@@ -109,4 +110,3 @@ export default function SplitMemberSelector({
     </div>
   );
 }
-

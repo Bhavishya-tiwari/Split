@@ -27,13 +27,10 @@ export default function GroupCard({ group }: GroupCardProps) {
         </div>
       </div>
       <h3 className="text-xl font-semibold text-gray-900 mb-2">{group.name}</h3>
-      {group.description && (
-        <p className="text-gray-600 text-sm mb-4">{group.description}</p>
-      )}
+      {group.description && <p className="text-gray-600 text-sm mb-4">{group.description}</p>}
       <p className="text-xs text-gray-400">
         Created {new Date(group.created_at).toLocaleDateString()}
       </p>
     </div>
   );
 }
-

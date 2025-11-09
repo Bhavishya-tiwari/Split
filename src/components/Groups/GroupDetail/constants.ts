@@ -15,7 +15,7 @@ export enum Currency {
 export const CURRENCY_CONFIG: Record<Currency, { symbol: string; name: string }> = {
   [Currency.INR]: {
     symbol: '₹',
-    name: 'Indian Rupee'
+    name: 'Indian Rupee',
   },
   // Future currency configs
   // [Currency.USD]: {
@@ -45,11 +45,11 @@ export enum SplitType {
 export const SPLIT_TYPE_CONFIG: Record<SplitType, { label: string; description: string }> = {
   [SplitType.EQUAL]: {
     label: 'Split Equally',
-    description: 'The expense will be divided equally among selected members'
+    description: 'The expense will be divided equally among selected members',
   },
   [SplitType.EXACT]: {
     label: 'Exact Amounts',
-    description: 'Manually specify the exact amount each member owes'
+    description: 'Manually specify the exact amount each member owes',
   },
   // Future split type configs
   // [SplitType.PERCENTAGE]: {
@@ -97,4 +97,3 @@ export const getSplitTypeLabel = (splitType: SplitType): string => {
 export const getSplitTypeDescription = (splitType: SplitType): string => {
   return SPLIT_TYPE_CONFIG[splitType]?.description || '';
 };
-

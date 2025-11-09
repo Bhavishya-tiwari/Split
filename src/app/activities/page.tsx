@@ -12,13 +12,15 @@ export default function ActivitiesPage() {
   useEffect(() => {
     const checkUser = async () => {
       const supabase = createClientForBrowser();
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         router.push('/');
         return;
       }
-      
+
       setLoading(false);
     };
 
@@ -53,10 +55,11 @@ export default function ActivitiesPage() {
             <Activity className="w-8 h-8 text-gray-400" />
           </div>
           <p className="text-gray-600 mb-4">No activity yet</p>
-          <p className="text-sm text-gray-500">Your transactions and settlements will appear here</p>
+          <p className="text-sm text-gray-500">
+            Your transactions and settlements will appear here
+          </p>
         </div>
       </div>
     </div>
   );
 }
-

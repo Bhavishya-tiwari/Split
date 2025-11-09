@@ -15,7 +15,7 @@ export default function SplitSummary({
   selectedMembersCount,
   totalAmount,
   totalExactAmounts,
-  currency
+  currency,
 }: SplitSummaryProps) {
   if (selectedMembersCount === 0) return null;
 
@@ -49,7 +49,7 @@ export default function SplitSummary({
   // Exact split validation summary
   if (splitType === SplitType.EXACT) {
     const isValid = Math.abs(totalExactAmounts - totalAmount) <= 0.01;
-    
+
     return (
       <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
         <p className="text-xs font-medium text-blue-900 mb-2">Validation Summary</p>
@@ -86,4 +86,3 @@ export default function SplitSummary({
 
   return null;
 }
-
