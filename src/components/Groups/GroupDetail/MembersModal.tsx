@@ -4,6 +4,7 @@ import { GroupMember } from './types';
 import MemberListItem from './MemberListItem';
 import { X, Plus } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { groupKeys } from '@/hooks/useGroups';
 
 interface MembersModalProps {
   isOpen: boolean;
@@ -65,7 +66,10 @@ export default function MembersModal({
       await response.json();
 
       // REACT QUERY: Invalidate cache to refetch members automatically
-      queryClient.invalidateQueries({ queryKey: ['group-summary', groupId] });
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active' // Refetch immediately to show new member
+      });
 
       // Close the add member modal and reset form
       setShowAddMemberModal(false);
@@ -100,7 +104,10 @@ export default function MembersModal({
       }
 
       // REACT QUERY: Invalidate cache to refetch members automatically
-      queryClient.invalidateQueries({ queryKey: ['group-summary', groupId] });
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active' // Refetch immediately to show new member
+      });
     } catch (err: unknown) {
       console.error('Error removing member:', err);
       const errorMessage = err instanceof Error ? err.message : undefined;
