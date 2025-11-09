@@ -200,7 +200,9 @@ export default function GroupDetailPage() {
       </div>
 
       <ExpensesSection
-        onAddExpense={() => console.log('Add expense')}
+        members={members}
+        groupId={groupId}
+        currentUserId={currentUserId}
       />
 
       <SettingsModal

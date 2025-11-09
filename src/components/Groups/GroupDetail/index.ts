@@ -6,5 +6,7 @@ export { default as MemberListItem } from './MemberListItem';
 export { default as GroupStatsCard } from './GroupStatsCard';
 export { default as SettingsModal } from './SettingsModal';
 export { default as EditGroupModal } from './EditGroupModal';
+export { default as AddExpenseModal } from './AddExpenseModal';
 export * from './types';
+export * from './constants';
 
