@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import axios from 'axios';
+import IconPicker from './IconPicker';
 
 interface CreateGroupModalProps {
   isOpen: boolean;
@@ -14,16 +15,19 @@ interface CreateGroupModalProps {
 interface FormData {
   name: string;
   description: string;
+  icon: string;
 }
 
 export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateGroupModalProps) {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState('Users');
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       name: '',
-      description: ''
+      description: '',
+      icon: 'Users'
     }
   });
 
@@ -32,10 +36,14 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
     setCreating(true);
 
     try {
-      await axios.post('/api/groups', data);
+      await axios.post('/api/groups', {
+        ...data,
+        icon: selectedIcon
+      });
 
       // Success - reset form and close modal
       reset();
+      setSelectedIcon('Users');
       setError('');
       onClose();
       onSuccess();
@@ -51,6 +59,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
   const handleClose = () => {
     setError('');
     reset();
+    setSelectedIcon('Users');
     onClose();
   };
 
@@ -90,7 +99,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
             )}
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
               Description (optional)
             </label>
@@ -101,6 +110,13 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
               placeholder="What's this group for?"
               rows={3}
               disabled={creating}
+            />
+          </div>
+
+          <div className="mb-6">
+            <IconPicker
+              selectedIcon={selectedIcon}
+              onIconSelect={setSelectedIcon}
             />
           </div>
 

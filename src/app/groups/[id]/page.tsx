@@ -28,7 +28,7 @@ export default function GroupDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editFormData, setEditFormData] = useState({ name: '', description: '' });
+  const [editFormData, setEditFormData] = useState({ name: '', description: '', icon: 'Users' });
   const [editError, setEditError] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -69,7 +69,6 @@ export default function GroupDetailPage() {
         const { data: membersResponse } = await axios.get(`/api/groups/${groupId}/members`);
         
         if (membersResponse.members) {
-          console.log("membersData", membersResponse.members);
           setMembers(membersResponse.members);
         }
 
@@ -90,7 +89,8 @@ export default function GroupDetailPage() {
     if (group) {
       setEditFormData({
         name: group.name,
-        description: group.description || ''
+        description: group.description || '',
+        icon: group.icon || 'Users'
       });
       setEditError('');
       setShowSettingsModal(false);
@@ -98,7 +98,7 @@ export default function GroupDetailPage() {
     }
   };
 
-  const handleUpdateGroup = async (data: { name: string; description: string }) => {
+  const handleUpdateGroup = async (data: { name: string; description: string; icon: string }) => {
     setEditError('');
     setIsUpdating(true);
 
@@ -106,7 +106,8 @@ export default function GroupDetailPage() {
       const response = await axios.put('/api/groups', {
         id: groupId,
         name: data.name,
-        description: data.description
+        description: data.description,
+        icon: data.icon
       });
 
       // Update local state with new group data
@@ -183,6 +184,7 @@ export default function GroupDetailPage() {
       <GroupHeader
         name={group.name}
         description={group.description}
+        icon={group.icon || 'Users'}
         createdAt={group.created_at}
         isAdmin={userRole === 'admin'}
         onSettingsClick={() => setShowSettingsModal(true)}
