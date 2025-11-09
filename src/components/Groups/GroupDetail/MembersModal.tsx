@@ -46,8 +46,7 @@ export default function MembersModal({
     setIsAdding(true);
 
     try {
-      const { data: responseData } = await axios.post('/api/groups/members', {
-        group_id: groupId,
+      const { data: responseData } = await axios.post(`/api/groups/${groupId}/members`, {
         email: data.email.trim().toLowerCase(),
       });
 
@@ -78,7 +77,7 @@ export default function MembersModal({
     setDeletingMemberId(memberId);
 
     try {
-      await axios.delete(`/api/groups/members?group_id=${groupId}&member_id=${memberId}`);
+      await axios.delete(`/api/groups/${groupId}/members?member_id=${memberId}`);
 
       // Remove the member from the list
       setMembers(members.filter(m => m.id !== memberId));

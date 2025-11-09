@@ -66,7 +66,7 @@ export default function GroupDetailPage() {
         setUserRole(role);
 
         // Fetch group members using API route
-        const { data: membersResponse } = await axios.get(`/api/groups/members?group_id=${groupId}`);
+        const { data: membersResponse } = await axios.get(`/api/groups/${groupId}/members`);
         
         if (membersResponse.members) {
           console.log("membersData", membersResponse.members);
