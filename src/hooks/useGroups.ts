@@ -106,8 +106,11 @@ export function useCreateGroup() {
       return result.group as Group;
     },
     onSuccess: () => {
-      // Invalidate and refetch groups list
-      queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
+      // Invalidate and refetch groups list immediately
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.lists(),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -135,10 +138,19 @@ export function useUpdateGroup() {
       return result.group as Group;
     },
     onSuccess: (_, variables) => {
-      // Invalidate specific group and groups list
-      queryClient.invalidateQueries({ queryKey: groupKeys.detail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: groupKeys.summary(variables.id) });
-      queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
+      // Invalidate specific group and groups list immediately
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.detail(variables.id),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(variables.id),
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.lists(),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -161,8 +173,11 @@ export function useDeleteGroup() {
       }
     },
     onSuccess: () => {
-      // Invalidate groups list
-      queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
+      // Invalidate groups list immediately
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.lists(),
+        refetchType: 'active'
+      });
     },
   });
 }

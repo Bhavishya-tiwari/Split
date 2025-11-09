@@ -9,6 +9,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { groupKeys } from './useGroups';
 
 // Query Keys
 export const expenseKeys = {
@@ -122,10 +123,16 @@ export function useCreateExpense(groupId: string) {
       return result.expense as Expense;
     },
     onSuccess: () => {
-      // Invalidate all expense pages for this group
-      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
-      // Also invalidate group summary
-      queryClient.invalidateQueries({ queryKey: ['groups', 'summary', groupId] });
+      // Invalidate and refetch all expense pages immediately
+      queryClient.invalidateQueries({ 
+        queryKey: expenseKeys.lists(),
+        refetchType: 'active' // Refetch active queries immediately
+      });
+      // Also invalidate group summary to show updated data
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -164,10 +171,16 @@ export function useUpdateExpense(groupId: string) {
       return result.expense as Expense;
     },
     onSuccess: () => {
-      // Invalidate all expense pages for this group
-      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
-      // Also invalidate group summary
-      queryClient.invalidateQueries({ queryKey: ['groups', 'summary', groupId] });
+      // Invalidate and refetch all expense pages immediately
+      queryClient.invalidateQueries({ 
+        queryKey: expenseKeys.lists(),
+        refetchType: 'active' // Refetch active queries immediately
+      });
+      // Also invalidate group summary to show updated data
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -190,10 +203,16 @@ export function useDeleteExpense(groupId: string) {
       }
     },
     onSuccess: () => {
-      // Invalidate all expense pages for this group
-      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
-      // Also invalidate group summary
-      queryClient.invalidateQueries({ queryKey: ['groups', 'summary', groupId] });
+      // Invalidate and refetch all expense pages immediately
+      queryClient.invalidateQueries({ 
+        queryKey: expenseKeys.lists(),
+        refetchType: 'active' // Refetch active queries immediately
+      });
+      // Also invalidate group summary to show updated data
+      queryClient.invalidateQueries({ 
+        queryKey: groupKeys.summary(groupId),
+        refetchType: 'active'
+      });
     },
   });
 }

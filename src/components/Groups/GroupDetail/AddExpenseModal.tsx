@@ -148,7 +148,6 @@ export default function AddExpenseModal({
       }
 
       const expenseData = {
-        group_id: groupId,
         title: data.title.trim(),
         currency: data.currency,
         paid_by: data.paidBy,
@@ -156,16 +155,8 @@ export default function AddExpenseModal({
         splits,
       };
 
-      const response = await fetch(`/api/groups/${groupId}/expenses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(expenseData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create expense');
-      }
+      // REACT QUERY: Use mutation (this sets isPending automatically)
+      await createExpense.mutateAsync(expenseData);
 
       if (onExpenseAdded) onExpenseAdded();
       handleClose();

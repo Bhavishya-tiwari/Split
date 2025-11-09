@@ -117,14 +117,8 @@ export default function EditExpenseModal({
     setSubmitError('');
 
     try {
-      const response = await fetch(`/api/groups/${groupId}/expenses?expense_id=${expense.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete expense');
-      }
+      // REACT QUERY: Use delete mutation (sets isPending automatically)
+      await deleteExpense.mutateAsync(expense.id);
 
       if (onExpenseDeleted) {
         onExpenseDeleted();
@@ -207,7 +201,6 @@ export default function EditExpenseModal({
 
       const expenseData = {
         expense_id: expense.id,
-        group_id: groupId,
         title: data.title.trim(),
         currency: data.currency,
         paid_by: data.paidBy,
@@ -215,16 +208,8 @@ export default function EditExpenseModal({
         splits,
       };
 
-      const response = await fetch(`/api/groups/${groupId}/expenses`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(expenseData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update expense');
-      }
+      // REACT QUERY: Use update mutation (sets isPending automatically)
+      await updateExpense.mutateAsync(expenseData);
 
       if (onExpenseUpdated) onExpenseUpdated();
       handleClose();
