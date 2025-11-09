@@ -4,18 +4,48 @@ This folder contains reusable PostgreSQL functions for the Split App.
 
 ## Available Functions
 
-### `upsert_expense_from_json`
+### `upsert_expense_from_json` (Simplified)
 **File:** `upsert-expense-function.sql`
 
 Creates or updates an expense with payers and splits from JSON input. This function handles the entire expense creation/update process in a single atomic transaction.
 
+> **Note:** This function has been simplified to focus on data mutation only. All business logic validation is now handled by the API layer for better separation of concerns and maintainability.
+
 #### Features
 - ✅ Creates new expenses or updates existing ones
-- ✅ Validates all required fields and relationships
 - ✅ Handles expense payers and splits automatically
-- ✅ Supports both group and personal expenses
 - ✅ Transaction-safe (all-or-nothing)
-- ✅ Validates split amounts match total amount
+- ✅ Clean separation: API validates, DB mutates
+- ✅ Faster execution (no validation overhead)
+
+#### Architecture
+```
+API Layer (route.ts)
+├─ Authentication & Authorization ✓
+├─ Business Logic Validation ✓
+├─ Data Structure Validation ✓
+└─ Calls DB Function ↓
+
+Database Function (simplified)
+├─ Data Mutation ONLY
+└─ Returns result
+```
+
+#### What the API Layer Validates (Before calling this function)
+- Title length and format
+- Amount is positive
+- User authentication and group membership
+- All user IDs are valid group members
+- Split amounts sum equals total amount
+- Cannot split expense only to payer
+- Proper split types
+
+#### What This Function Does
+- Extract data from JSON input
+- CREATE or UPDATE expense record
+- Manage expense_payers records (delete old, insert new)
+- Manage expense_splits records (delete old, insert new)
+- Return the expense UUID
 
 #### Supported Split Types
 - `equal` - Split equally among selected members

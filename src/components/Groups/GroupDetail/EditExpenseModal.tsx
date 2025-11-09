@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { X } from 'lucide-react';
+import { X, Pencil, Trash2 } from 'lucide-react';
 import { GroupMember } from './types';
 import axios from 'axios';
 import {
   Currency,
   SplitType,
-  DEFAULT_CURRENCY,
   DEFAULT_SPLIT_TYPE,
   SPLIT_TYPE_CONFIG,
   getSplitTypeDescription,
@@ -17,13 +16,23 @@ import ExpenseFormFields from './ExpenseFormFields';
 import SplitMemberSelector from './SplitMemberSelector';
 import SplitSummary from './SplitSummary';
 
-interface AddExpenseModalProps {
+interface EditExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   members: GroupMember[];
   groupId: string;
   currentUserId: string | null;
-  onExpenseAdded?: () => void;
+  expense: ExpenseToEdit | null;
+  onExpenseUpdated?: () => void;
+  onExpenseDeleted?: () => void;
+}
+
+interface ExpenseToEdit {
+  id: string;
+  title: string;
+  currency: string;
+  expense_payers: Array<{ paid_by: string; amount: number; }>;
+  expense_splits: Array<{ user_id: string; amount: number; split_type: string; }>;
 }
 
 interface ExpenseFormData {
@@ -33,42 +42,98 @@ interface ExpenseFormData {
   amount: string;
 }
 
-export default function AddExpenseModal({
+export default function EditExpenseModal({
   isOpen,
   onClose,
   members,
   groupId,
-  currentUserId,
-  onExpenseAdded
-}: AddExpenseModalProps) {
+  expense,
+  onExpenseUpdated,
+  onExpenseDeleted
+}: EditExpenseModalProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [splitType, setSplitType] = useState<SplitType>(DEFAULT_SPLIT_TYPE);
   const [selectedSplitMembers, setSelectedSplitMembers] = useState<Set<string>>(new Set());
   const [exactAmounts, setExactAmounts] = useState<Record<string, string>>({});
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<ExpenseFormData>({
-    defaultValues: {
-      title: '',
-      currency: DEFAULT_CURRENCY,
-      paidBy: currentUserId || '',
-      amount: '',
-    }
-  });
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<ExpenseFormData>();
 
   const amount = watch('amount');
   const paidBy = watch('paidBy');
   const currency = watch('currency');
   const totalPaid = parseFloat(amount) || 0;
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && expense) {
+      setIsEditing(false);
+      const firstSplit = expense.expense_splits[0];
+      const detectedSplitType = firstSplit?.split_type === 'exact' ? SplitType.EXACT : SplitType.EQUAL;
+      setSplitType(detectedSplitType);
+
+      const splitUserIds = new Set(expense.expense_splits.map(s => s.user_id));
+      setSelectedSplitMembers(splitUserIds);
+
+      if (detectedSplitType === SplitType.EXACT) {
+        const amounts: Record<string, string> = {};
+        expense.expense_splits.forEach(split => {
+          amounts[split.user_id] = split.amount.toString();
+        });
+        setExactAmounts(amounts);
+      }
+
+      const payer = expense.expense_payers[0];
+      reset({
+        title: expense.title,
+        currency: expense.currency as Currency,
+        paidBy: payer?.paid_by || '',
+        amount: payer?.amount.toString() || '',
+      });
+    }
+  }, [isOpen, expense, reset]);
+
+  if (!isOpen || !expense) return null;
 
   const handleClose = () => {
+    setIsEditing(false);
+    setIsDeleting(false);
     setSubmitError('');
     setSplitType(DEFAULT_SPLIT_TYPE);
     setSelectedSplitMembers(new Set());
     setExactAmounts({});
+    reset();
     onClose();
+  };
+
+  const handleDelete = async () => {
+    if (!expense) return;
+    
+    if (!confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setSubmitError('');
+
+    try {
+      await axios.delete(`/api/groups/${groupId}/expenses?expense_id=${expense.id}`);
+      
+      if (onExpenseDeleted) {
+        onExpenseDeleted();
+      }
+      handleClose();
+    } catch (err: unknown) {
+      console.error('Error deleting expense:', err);
+      if (axios.isAxiosError(err)) {
+        setSubmitError(err.response?.data?.error || 'Failed to delete expense');
+      } else {
+        setSubmitError('Failed to delete expense');
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const toggleSplitMember = (userId: string) => {
@@ -129,6 +194,7 @@ export default function AddExpenseModal({
       }
 
       const expenseData = {
+        expense_id: expense.id,
         group_id: groupId,
         title: data.title.trim(),
         currency: data.currency,
@@ -137,20 +203,20 @@ export default function AddExpenseModal({
         splits
       };
 
-      const response = await axios.post(`/api/groups/${groupId}/expenses`, expenseData);
+      const response = await axios.put(`/api/groups/${groupId}/expenses`, expenseData);
       
-      if (response.status === 201) {
-        if (onExpenseAdded) onExpenseAdded();
+      if (response.status === 200) {
+        if (onExpenseUpdated) onExpenseUpdated();
         handleClose();
       }
     } catch (err: unknown) {
-      console.error('Error creating expense:', err);
+      console.error('Error updating expense:', err);
       if (err instanceof Error) {
         setSubmitError(err.message);
       } else if (axios.isAxiosError(err)) {
-        setSubmitError(err.response?.data?.error || 'Failed to create expense');
+        setSubmitError(err.response?.data?.error || 'Failed to update expense');
       } else {
-        setSubmitError('Failed to create expense');
+        setSubmitError('Failed to update expense');
       }
     } finally {
       setIsSubmitting(false);
@@ -164,10 +230,34 @@ export default function AddExpenseModal({
         
         <div className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">Add New Expense</h2>
-            <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-              <X className="h-6 w-6" />
-            </button>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isEditing ? 'Edit Expense' : 'View Expense'}
+            </h2>
+            <div className="flex items-center gap-2">
+              {!isEditing && (
+                <>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Edit expense"
+                    disabled={isDeleting}
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Delete expense"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+              <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto">
@@ -176,7 +266,7 @@ export default function AddExpenseModal({
                 register={register}
                 errors={errors}
                 members={members}
-                isDisabled={isSubmitting}
+                isDisabled={!isEditing || isSubmitting}
                 watchedAmount={amount}
                 watchedCurrency={currency}
               />
@@ -190,7 +280,7 @@ export default function AddExpenseModal({
                 onUpdateExactAmount={updateExactAmount}
                 totalAmount={totalPaid}
                 currency={currency}
-                isDisabled={isSubmitting}
+                isDisabled={!isEditing || isSubmitting}
                 paidBy={paidBy}
               />
 
@@ -207,8 +297,8 @@ export default function AddExpenseModal({
                 <select
                   value={splitType}
                   onChange={(e) => setSplitType(e.target.value as SplitType)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-50 disabled:text-gray-700"
+                  disabled={!isEditing || isSubmitting}
                 >
                   {Object.entries(SPLIT_TYPE_CONFIG).map(([type, config]) => (
                     <option key={type} value={type}>{config.label}</option>
@@ -225,23 +315,33 @@ export default function AddExpenseModal({
             </div>
 
             <div className="p-6 border-t border-gray-200 bg-gray-50">
-              <div className="flex gap-3">
+              {!isEditing ? (
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all"
-                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all"
                 >
-                  Cancel
+                  Close
                 </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || selectedSplitMembers.size === 0 || (selectedSplitMembers.size === 1 && Array.from(selectedSplitMembers)[0] === paidBy)}
-                  className="flex-1 px-4 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Creating...' : 'Create Expense'}
-                </button>
-              </div>
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all"
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || selectedSplitMembers.size === 0 || (selectedSplitMembers.size === 1 && Array.from(selectedSplitMembers)[0] === paidBy)}
+                    className="flex-1 px-4 py-3 bg-linear-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? 'Updating...' : 'Update Expense'}
+                  </button>
+                </div>
+              )}
             </div>
           </form>
         </div>
