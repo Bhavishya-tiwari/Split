@@ -8,6 +8,7 @@ This directory contains all the components used in the Group Detail page (`/grou
 GroupDetail/
 ├── GroupHeader.tsx         # Group name, description, created date, and settings button
 ├── ExpensesSection.tsx     # Expenses list with add expense button
+├── BalanceCard.tsx         # User's balance card (debts, credits, net balance)
 ├── MembersCard.tsx         # Main members card component (compartmentalized)
 ├── MembersModal.tsx        # Modal showing all members (compartmentalized)
 ├── MemberListItem.tsx      # Reusable member display component (compartmentalized)
@@ -16,6 +17,7 @@ GroupDetail/
 ├── EditGroupModal.tsx      # Modal for editing group details
 ├── types.ts                # Shared TypeScript types
 ├── index.ts                # Barrel export file
+├── BalanceCard.README.md   # Detailed docs for BalanceCard component
 ├── MembersCard.README.md   # Detailed docs for Members components
 └── README.md               # This file
 ```
@@ -43,6 +45,27 @@ Shows the list of expenses with an empty state and add expense button.
 **Props:**
 
 - `onAddExpense`: () => void - Callback when add expense button is clicked
+
+---
+
+### BalanceCard
+
+Displays the current user's balance information for the group, including debts, credits, and net balance.
+
+**Props:**
+
+- `groupId`: string - The ID of the group
+- `currentUserId`: string | null - The current authenticated user's ID
+
+**Features:**
+
+- Shows what the user owes to other members
+- Shows what other members owe to the user
+- Displays net balance with color coding
+- Handles loading, error, and empty states
+- Shows settled state when all balances are zero
+
+📖 See [BalanceCard.README.md](./BalanceCard.README.md) for detailed documentation.
 
 ---
 
@@ -143,6 +166,7 @@ interface GroupMember {
 import {
   GroupHeader,
   ExpensesSection,
+  BalanceCard,
   MembersCard,
   MembersModal, // Available if needed separately
   MemberListItem, // Available if needed separately
@@ -160,7 +184,12 @@ import {
   createdAt={group.created_at}
   isAdmin={userRole === 'admin'}
   onSettingsClick={() => setShowSettingsModal(true)}
-/>;
+/>
+
+<BalanceCard 
+  groupId={group.id} 
+  currentUserId={user?.id || null} 
+/>
 ```
 
 ## Design Principles
