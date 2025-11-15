@@ -1,55 +1,59 @@
 # Database Functions
 
-This folder contains reusable PostgreSQL functions for the Split App.
+This folder contains reusable PostgreSQL functions for the Split App, organized by feature area.
+
+## 📁 Folder Structure
+
+```
+Functions/
+├── Expenses/              # Expense management functions
+│   ├── upsert-expense-function.sql
+│   └── README.md
+├── Settlements/           # Balance and settlement functions
+│   ├── get-group-balances-function.sql
+│   ├── get-group-balances-function-README.md
+│   ├── SETTLEMENTS_IMPLEMENTATION_GUIDE.md
+│   └── README.md
+└── README.md             # This file (overview)
+```
 
 ## Available Functions
 
-### `upsert_expense_from_json` (Simplified)
-**File:** `upsert-expense-function.sql`
+### Expenses Functions
+
+See [`Expenses/README.md`](./Expenses/README.md) for details.
+
+#### `upsert_expense_from_json`
+**Location:** `Expenses/upsert-expense-function.sql`
 
 Creates or updates an expense with payers and splits from JSON input. This function handles the entire expense creation/update process in a single atomic transaction.
 
 > **Note:** This function has been simplified to focus on data mutation only. All business logic validation is now handled by the API layer for better separation of concerns and maintainability.
 
-#### Features
+**Features:**
 - ✅ Creates new expenses or updates existing ones
 - ✅ Handles expense payers and splits automatically
 - ✅ Transaction-safe (all-or-nothing)
 - ✅ Clean separation: API validates, DB mutates
 - ✅ Faster execution (no validation overhead)
 
-#### Architecture
-```
-API Layer (route.ts)
-├─ Authentication & Authorization ✓
-├─ Business Logic Validation ✓
-├─ Data Structure Validation ✓
-└─ Calls DB Function ↓
+### Settlements Functions
 
-Database Function (simplified)
-├─ Data Mutation ONLY
-└─ Returns result
-```
+See [`Settlements/README.md`](./Settlements/README.md) for details.
 
-#### What the API Layer Validates (Before calling this function)
-- Title length and format
-- Amount is positive
-- User authentication and group membership
-- All user IDs are valid group members
-- Split amounts sum equals total amount
-- Cannot split expense only to payer
-- Proper split types
+#### `get_group_balances`
+**Location:** `Settlements/get-group-balances-function.sql`
 
-#### What This Function Does
-- Extract data from JSON input
-- CREATE or UPDATE expense record
-- Manage expense_payers records (delete old, insert new)
-- Manage expense_splits records (delete old, insert new)
-- Return the expense UUID
+Calculates the financial balances for all members in a group. It aggregates expense payments, expense splits, and manual payments to determine each member's net balance.
 
-#### Supported Split Types
-- `equal` - Split equally among selected members
-- `exact` - Manually specify exact amounts for each member
+**Features:**
+- ✅ Calculates expense payments and splits
+- ✅ Includes manual payments in balance calculation
+- ✅ Returns balances for all group members
+- ✅ Single efficient database query
+- ✅ Handles members with no expenses
+
+**See also:** [`Settlements/SETTLEMENTS_IMPLEMENTATION_GUIDE.md`](./Settlements/SETTLEMENTS_IMPLEMENTATION_GUIDE.md) for complete implementation guide.
 
 ---
 
@@ -65,7 +69,7 @@ Database Function (simplified)
    - Click "New Query"
 
 3. **Copy and Execute**
-   - Open the function file (e.g., `upsert-expense-function.sql`)
+   - Open the function file (e.g., `Expenses/upsert-expense-function.sql`)
    - Copy the entire contents
    - Paste into the SQL Editor
    - Click "Run" button (or press `Cmd/Ctrl + Enter`)
@@ -87,7 +91,7 @@ supabase login
 supabase link --project-ref YOUR_PROJECT_REF
 
 # Run the function file
-supabase db execute < "DB Migrations/Functions/upsert-expense-function.sql"
+supabase db execute < "DB Migrations/Functions/Expenses/upsert-expense-function.sql"
 ```
 
 ### Option 3: Via psql (Direct Database Connection)
@@ -97,10 +101,10 @@ supabase db execute < "DB Migrations/Functions/upsert-expense-function.sql"
 psql "postgresql://postgres:[YOUR_PASSWORD]@[YOUR_HOST]:[PORT]/postgres"
 
 # Execute the file
-\i '/Users/bhavi/Documents/split/split-app/DB Migrations/Functions/upsert-expense-function.sql'
+\i '/Users/bhavi/Documents/split/split-app/DB Migrations/Functions/Expenses/upsert-expense-function.sql'
 
 # Or run it directly
-psql "postgresql://..." < "DB Migrations/Functions/upsert-expense-function.sql"
+psql "postgresql://..." < "DB Migrations/Functions/Expenses/upsert-expense-function.sql"
 ```
 
 ---
@@ -405,7 +409,14 @@ DROP FUNCTION IF EXISTS create_expense_from_json(JSONB);
 
 ## Related Documentation
 
+### Expenses
 - [Expenses Table Migration](../Expenses%20table/expenses-table-migration.sql)
 - [Expense Payers Migration](../Expense%20Payers%20table/expense-payers-migration.sql)
 - [Expense Splits Migration](../Expense%20Splits%20table/expense-splits-migration.sql)
+- [Expenses Functions README](./Expenses/README.md)
+
+### Settlements
+- [Payments Table Migration](../Payments%20table/README.md)
+- [Settlements Functions README](./Settlements/README.md)
+- [Settlements Implementation Guide](./Settlements/SETTLEMENTS_IMPLEMENTATION_GUIDE.md)
 
