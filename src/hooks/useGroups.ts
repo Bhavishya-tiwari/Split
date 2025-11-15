@@ -45,7 +45,6 @@ export interface GroupMember {
 export interface GroupSummary {
   group: Group;
   members: GroupMember[];
-  expenses: any[];
   expenseCount: number;
   userRole: string;
 }
