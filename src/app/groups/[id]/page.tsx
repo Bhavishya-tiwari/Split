@@ -8,7 +8,7 @@ import {
   GroupHeader,
   ExpensesSection,
   MembersCard,
-  GroupStatsCard,
+  BalanceCard,
   SettingsModal,
   EditGroupModal,
   Group,
@@ -175,7 +175,7 @@ export default function GroupDetailPage() {
           currentUserId={currentUserId}
         />
 
-        <GroupStatsCard />
+        <BalanceCard groupId={groupId} currentUserId={currentUserId} />
       </div>
 
       <ExpensesSection members={members} groupId={groupId} currentUserId={currentUserId} />

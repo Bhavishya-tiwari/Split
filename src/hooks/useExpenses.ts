@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { groupKeys } from './useGroups';
+import { settlementKeys } from './useSettlements';
 
 // Query Keys
 export const expenseKeys = {
@@ -91,6 +92,40 @@ export function useExpenses(groupId: string, page: number = 1, limit: number = 5
 }
 
 /**
+ * Helper function to invalidate all caches after expense mutations
+ */
+async function invalidateExpenseCaches(
+  queryClient: ReturnType<typeof useQueryClient>,
+  groupId: string
+) {
+  // Invalidate and refetch all expense pages immediately
+  await queryClient.invalidateQueries({ 
+    queryKey: expenseKeys.lists(),
+    refetchType: 'active'
+  });
+  // Also invalidate group summary to show updated data
+  await queryClient.invalidateQueries({ 
+    queryKey: groupKeys.summary(groupId),
+    refetchType: 'active'
+  });
+  // CRITICAL: Force refetch settlements immediately
+  const settlementQueryKey = ['settlements', 'group', groupId];
+  await queryClient.invalidateQueries({ 
+    queryKey: settlementQueryKey,
+    refetchType: 'active'
+  });
+  await queryClient.invalidateQueries({ 
+    queryKey: ['settlements'],
+    refetchType: 'active'
+  });
+  // Force immediate refetch
+  await queryClient.refetchQueries({
+    queryKey: settlementQueryKey,
+    type: 'active',
+  });
+}
+
+/**
  * Create a new expense
  */
 export function useCreateExpense(groupId: string) {
@@ -122,17 +157,8 @@ export function useCreateExpense(groupId: string) {
       const result = await response.json();
       return result.expense as Expense;
     },
-    onSuccess: () => {
-      // Invalidate and refetch all expense pages immediately
-      queryClient.invalidateQueries({ 
-        queryKey: expenseKeys.lists(),
-        refetchType: 'active' // Refetch active queries immediately
-      });
-      // Also invalidate group summary to show updated data
-      queryClient.invalidateQueries({ 
-        queryKey: groupKeys.summary(groupId),
-        refetchType: 'active'
-      });
+    onSuccess: async () => {
+      await invalidateExpenseCaches(queryClient, groupId);
     },
   });
 }
@@ -170,17 +196,8 @@ export function useUpdateExpense(groupId: string) {
       const result = await response.json();
       return result.expense as Expense;
     },
-    onSuccess: () => {
-      // Invalidate and refetch all expense pages immediately
-      queryClient.invalidateQueries({ 
-        queryKey: expenseKeys.lists(),
-        refetchType: 'active' // Refetch active queries immediately
-      });
-      // Also invalidate group summary to show updated data
-      queryClient.invalidateQueries({ 
-        queryKey: groupKeys.summary(groupId),
-        refetchType: 'active'
-      });
+    onSuccess: async () => {
+      await invalidateExpenseCaches(queryClient, groupId);
     },
   });
 }
@@ -202,17 +219,8 @@ export function useDeleteExpense(groupId: string) {
         throw new Error(error.error || 'Failed to delete expense');
       }
     },
-    onSuccess: () => {
-      // Invalidate and refetch all expense pages immediately
-      queryClient.invalidateQueries({ 
-        queryKey: expenseKeys.lists(),
-        refetchType: 'active' // Refetch active queries immediately
-      });
-      // Also invalidate group summary to show updated data
-      queryClient.invalidateQueries({ 
-        queryKey: groupKeys.summary(groupId),
-        refetchType: 'active'
-      });
+    onSuccess: async () => {
+      await invalidateExpenseCaches(queryClient, groupId);
     },
   });
 }
