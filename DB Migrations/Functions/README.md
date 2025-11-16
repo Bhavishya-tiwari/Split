@@ -14,6 +14,9 @@ Functions/
 │   ├── get-group-balances-function-README.md
 │   ├── SETTLEMENTS_IMPLEMENTATION_GUIDE.md
 │   └── README.md
+├── Users/                 # User-level functions
+│   ├── get-user-total-balances-function.sql
+│   └── README.md
 └── README.md             # This file (overview)
 ```
 
@@ -54,6 +57,22 @@ Calculates the financial balances for all members in a group. It aggregates expe
 - ✅ Handles members with no expenses
 
 **See also:** [`Settlements/SETTLEMENTS_IMPLEMENTATION_GUIDE.md`](./Settlements/SETTLEMENTS_IMPLEMENTATION_GUIDE.md) for complete implementation guide.
+
+### Users Functions
+
+See [`Users/README.md`](./Users/README.md) for details.
+
+#### `get_user_total_balances`
+**Location:** `Users/get-user-total-balances-function.sql`
+
+Calculates the total financial balance details for a user across all groups they are part of. This function aggregates balances from all groups, providing a complete financial overview for the user.
+
+**Features:**
+- ✅ Calculates expense payments and splits across all groups
+- ✅ Includes manual payments in balance calculation
+- ✅ Returns aggregated breakdown of who the user owes and who owes them
+- ✅ Single efficient database query
+- ✅ Perfect for "Friends" or "All Balances" views
 
 ---
 
@@ -419,4 +438,10 @@ DROP FUNCTION IF EXISTS create_expense_from_json(JSONB);
 - [Payments Table Migration](../Payments%20table/README.md)
 - [Settlements Functions README](./Settlements/README.md)
 - [Settlements Implementation Guide](./Settlements/SETTLEMENTS_IMPLEMENTATION_GUIDE.md)
+
+### Users
+- [Users Functions README](./Users/README.md)
+- [Payments Table Migration](../Payments%20table/README.md)
+- [Expenses Table Migration](../Expenses%20table/expenses-table-migration.sql)
+- [Expense Splits Migration](../Expense%20Splits%20table/expense-splits-migration.sql)
 
