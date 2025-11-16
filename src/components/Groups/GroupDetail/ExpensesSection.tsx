@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DollarSign, Loader2, User } from 'lucide-react';
+import { DollarSign, Loader2 } from 'lucide-react';
 import { GroupMember } from './types';
 import AddExpenseModal from './AddExpenseModal';
 import EditExpenseModal from './EditExpenseModal';
@@ -50,17 +50,6 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
   const handleEditExpense = (expense: Expense) => {
     setExpenseToEdit(expense);
     setShowEditExpenseModal(true);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   const getTotalAmount = (expense: Expense): number => {
@@ -113,7 +102,22 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
             <div className="space-y-4">
               {expenses.map((expense) => {
                 const totalAmount = getTotalAmount(expense);
-                const payer = expense.expense_payers[0]; // Assuming single payer for now
+                
+                // Find if current user is included in the expense
+                const userSplit = expense.expense_splits.find(
+                  (split) => split.user_id === currentUserId
+                );
+                
+                // Calculate how much the user paid
+                const userPaid = expense.expense_payers
+                  .filter((payer) => payer.paid_by === currentUserId)
+                  .reduce((sum, payer) => sum + payer.amount, 0);
+                
+                // Calculate user's share
+                const userShare = userSplit?.amount || 0;
+                
+                // Calculate net: positive if user is owed money, negative if user owes money
+                const netAmount = userPaid - userShare;
 
                 return (
                   <div
@@ -125,9 +129,6 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <h4 className="text-lg font-semibold text-gray-900">{expense.title}</h4>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {formatDate(expense.created_at)}
-                        </p>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
                         <span className="text-2xl font-bold text-emerald-600">
@@ -136,71 +137,34 @@ export default function ExpensesSection({ members, groupId, currentUserId }: Exp
                       </div>
                     </div>
 
-                    {/* Payer Info */}
-                    {payer && (
-                      <div className="mb-3 p-3 bg-blue-50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm font-medium text-blue-900">
-                            Paid by:{' '}
-                            {payer.payer_profile?.full_name ||
-                              payer.payer_profile?.email ||
-                              'Unknown'}
-                          </span>
-                          <span className="text-sm text-blue-700 ml-auto">
-                            {getCurrencySymbol(expense.currency as Currency)}{' '}
-                            {payer.amount.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Splits */}
-                    {expense.expense_splits.length > 0 && (
+                    {/* User's Share Status */}
+                    {userSplit ? (
                       <div className="mt-3">
-                        <p className="text-xs font-medium text-gray-500 uppercase mb-2">
-                          Split Among ({expense.expense_splits.length})
-                        </p>
-                        <div className="space-y-2">
-                          {expense.expense_splits.map((split) => (
-                            <div
-                              key={split.id}
-                              className="flex items-center justify-between p-2 bg-gray-50 rounded"
-                            >
-                              <span className="text-sm text-gray-700">
-                                {split.split_user_profile?.full_name ||
-                                  split.split_user_profile?.email ||
-                                  'Unknown'}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500 px-2 py-1 bg-white rounded border border-gray-200">
-                                  {split.split_type}
-                                </span>
-                                <span className="text-sm font-medium text-gray-900">
-                                  {getCurrencySymbol(expense.currency as Currency)}{' '}
-                                  {split.amount.toFixed(2)}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        {netAmount > 0 ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">You are owed:</span>
+                            <span className="text-sm font-semibold text-green-600">
+                              {getCurrencySymbol(expense.currency as Currency)} {Math.abs(netAmount).toFixed(2)}
+                            </span>
+                          </div>
+                        ) : netAmount < 0 ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">You owe:</span>
+                            <span className="text-sm font-semibold text-red-600">
+                              {getCurrencySymbol(expense.currency as Currency)} {Math.abs(netAmount).toFixed(2)}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">You&apos;re settled</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-3">
+                        <span className="text-sm text-gray-500">You are not included in this expense</span>
                       </div>
                     )}
-
-                    {/* Creator Info */}
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <p className="text-xs text-gray-500">
-                        Created by{' '}
-                        <span className="font-medium">
-                          {expense.created_by_profile?.full_name ||
-                            expense.created_by_profile?.email ||
-                            'Unknown'}
-                        </span>
-                        {expense.updated_at !== expense.created_at && (
-                          <span className="ml-2">• Updated {formatDate(expense.updated_at)}</span>
-                        )}
-                      </p>
-                    </div>
                   </div>
                 );
               })}
